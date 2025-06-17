@@ -1,0 +1,3 @@
+https://www.codequoi.com/programmation-reseau-via-socket-en-c/ // SOCKET EN c
+https://copyconstruct.medium.com/the-method-to-epolls-madness-d9d2d6378642 // FONCTION epoll
+https://www.youtube.com/watch?v=bs1WluLpLqE&t=1411s&ab_channel=PSTA%3APerformance%26SecurityTestingAcademy //REQUETE HTML
