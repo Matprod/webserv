@@ -6,7 +6,7 @@
 /*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/22 10:58:52 by Matprod           #+#    #+#             */
-/*   Updated: 2025/06/24 16:44:19 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/06/24 18:11:42 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,16 +28,18 @@ class LocationConfig {
 public:
     std::set<std::string> allow_methods;
     std::string root;
-    bool directory_listing;
+    bool autoindex; // Remplacement de directory_listing par autoindex
     std::vector<std::string> index;
-    std::string cgi_extension;
-    std::string cgi_path;
+    std::map<std::string, std::string> cgi_extensions;
     std::string upload_path;
     std::string path;
-    std::string redirect;
+    int redirect_status;
+    std::string redirect_url;
+    std::string alias;
 
     LocationConfig();
     virtual ~LocationConfig();
+    
 };
 
 class ServerConfig {

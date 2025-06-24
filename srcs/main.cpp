@@ -6,7 +6,7 @@
 /*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/22 10:58:05 by Matprod           #+#    #+#             */
-/*   Updated: 2025/06/24 16:54:19 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/06/24 18:13:41 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,6 +46,8 @@ void printConfig(const Config& config) {
 
         std::cout << "  Locations:" << std::endl;
         for (size_t j = 0; j < server.locations.size(); ++j) {
+			if (j >= 1)
+				std::cout << std::endl;
             const LocationConfig& loc = server.locations[j];
             std::cout << "    Path: " << loc.path << std::endl;
             std::cout << "    Allow Methods: ";
@@ -54,17 +56,22 @@ void printConfig(const Config& config) {
             }
             std::cout << std::endl;
             std::cout << "    Root: " << loc.root << std::endl;
-            std::cout << "    Directory Listing: " << (loc.directory_listing ? "on" : "off") << std::endl;
+            std::cout << "    Autoindex: " << (loc.autoindex ? "on" : "off") << std::endl;
             std::cout << "    Index: ";
             for (size_t k = 0; k < loc.index.size(); ++k) {
                 std::cout << loc.index[k];
                 if (k < loc.index.size() - 1) std::cout << ", ";
             }
             std::cout << std::endl;
-            std::cout << "    Redirect: " << (loc.redirect.empty() ? "none" : loc.redirect) << std::endl; // Nouvel affichage
-            std::cout << "    CGI Extension: " << (loc.cgi_extension.empty() ? "none" : loc.cgi_extension) << std::endl;
-            std::cout << "    CGI Path: " << (loc.cgi_path.empty() ? "none" : loc.cgi_path) << std::endl;
+            std::cout << "    Redirect Status: " << (loc.redirect_status) << std::endl; // À corriger avec stringstream (voir ci-dessous)
+            std::cout << "    Redirect URL: " << (loc.redirect_url.empty() ? "none" : loc.redirect_url) << std::endl;
+            std::cout << "    CGI Extensions: ";
+            for (std::map<std::string, std::string>::const_iterator it = loc.cgi_extensions.begin(); it != loc.cgi_extensions.end(); ++it) {
+                std::cout << it->first << " -> " << it->second << ", ";
+            }
+            std::cout << std::endl;
             std::cout << "    Upload Path: " << (loc.upload_path.empty() ? "none" : loc.upload_path) << std::endl;
+            std::cout << "    Alias: " << (loc.alias.empty() ? "none" : loc.alias) << std::endl; // Nouvel affichage pour alias
         }
         std::cout << std::endl;
     }

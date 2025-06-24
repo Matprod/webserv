@@ -6,13 +6,13 @@
 /*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/22 11:00:25 by Matprod           #+#    #+#             */
-/*   Updated: 2025/06/24 16:54:04 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/06/24 18:17:04 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Config.hpp"
 
-LocationConfig::LocationConfig() : directory_listing(false) {}
+LocationConfig::LocationConfig() : autoindex(false), redirect_status(0) {}
 LocationConfig::~LocationConfig() {}
 
 ServerConfig::ServerConfig() : port(8080), max_body_size(1048576) {}
@@ -87,11 +87,11 @@ void Config::parseDirective(const std::vector<std::string>& tokens, ServerConfig
                 std::cerr << "Invalid root directive" << std::endl;
                 exit(1);
             }
-        } else if (directive == "directory_listing") {
-            if (values.size() == 1 && values[0] == "on") current_location->directory_listing = true;
-            else if (values.size() == 1 && values[0] == "off") current_location->directory_listing = false;
+        } else if (directive == "autoindex") { // Nouvelle prise en charge pour autoindex
+            if (values.size() == 1 && values[0] == "on") current_location->autoindex = true;
+            else if (values.size() == 1 && values[0] == "off") current_location->autoindex = false;
             else {
-                std::cerr << "Invalid directory_listing directive" << std::endl;
+                std::cerr << "Invalid autoindex directive" << std::endl;
                 exit(1);
             }
         } else if (directive == "index") {
@@ -99,15 +99,10 @@ void Config::parseDirective(const std::vector<std::string>& tokens, ServerConfig
                 current_location->index.push_back(values[i]);
             }
         } else if (directive == "cgi_extension") {
-            if (values.size() == 1) current_location->cgi_extension = values[0];
-            else {
+            if (values.size() == 2) {
+                current_location->cgi_extensions[values[0]] = values[1];
+            } else {
                 std::cerr << "Invalid cgi_extension directive" << std::endl;
-                exit(1);
-            }
-        } else if (directive == "cgi_path") {
-            if (values.size() == 1) current_location->cgi_path = values[0];
-            else {
-                std::cerr << "Invalid cgi_path directive" << std::endl;
                 exit(1);
             }
         } else if (directive == "upload_path") {
@@ -116,10 +111,25 @@ void Config::parseDirective(const std::vector<std::string>& tokens, ServerConfig
                 std::cerr << "Invalid upload_path directive" << std::endl;
                 exit(1);
             }
-        } else if (directive == "redirect") { // Nouvelle prise en charge pour redirection
-            if (values.size() == 1) current_location->redirect = values[0];
-            else {
-                std::cerr << "Invalid redirect directive" << std::endl;
+        } else if (directive == "return") {
+            if (values.size() == 2) {
+                char* endptr;
+                int status = strtol(values[0].c_str(), &endptr, 10);
+                if (*endptr != '\0' || status < 300 || status > 399) {
+                    std::cerr << "Invalid return status code: " << values[0] << std::endl;
+                    exit(1);
+                }
+                current_location->redirect_status = status;
+                current_location->redirect_url = values[1];
+            } else {
+                std::cerr << "Invalid return directive" << std::endl;
+                exit(1);
+            }
+        } else if (directive == "alias") {
+            if (values.size() == 1) {
+                current_location->alias = values[0];
+            } else {
+                std::cerr << "Invalid alias directive" << std::endl;
                 exit(1);
             }
         } else {
@@ -194,6 +204,7 @@ void Config::parseDirective(const std::vector<std::string>& tokens, ServerConfig
         exit(1);
     }
 }
+
 void Config::parseFile(const std::string& path) {
     std::ifstream file(path.c_str());
     if (!file.is_open()) {
