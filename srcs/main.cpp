@@ -6,7 +6,7 @@
 /*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/22 10:58:05 by Matprod           #+#    #+#             */
-/*   Updated: 2025/06/24 18:13:41 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/06/26 21:19:03 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,6 +62,8 @@ void printConfig(const Config& config) {
                 std::cout << loc.index[k];
                 if (k < loc.index.size() - 1) std::cout << ", ";
             }
+            if (loc.index.size() == 0)
+                std::cout << "none";
             std::cout << std::endl;
             std::cout << "    Redirect Status: " << (loc.redirect_status) << std::endl; // À corriger avec stringstream (voir ci-dessous)
             std::cout << "    Redirect URL: " << (loc.redirect_url.empty() ? "none" : loc.redirect_url) << std::endl;
@@ -81,8 +83,11 @@ int main(int argc, char *argv[]) {
 	std::string config_path = (argc > 1) ? argv[1] : "default.conf";
 	Config config(config_path);
 
-	std::cout << "Configuration parsee a partir de : " << config_path << std::endl;
-	printConfig(config);
+	if (config.error != ERROR)
+    {
+		std::cout << "Configuration parsee a partir de : " << config_path << std::endl;
+		printConfig(config);
+	}
 
 	return 0;
 }

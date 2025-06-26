@@ -58,6 +58,6 @@
  // #include "Socket.hpp"
  // #include "ListenConfig.hpp"
 
-
+#define ERROR 1
 
 #endif // WEBSERV_HPP

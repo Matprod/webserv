@@ -6,7 +6,7 @@
 /*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/22 10:58:52 by Matprod           #+#    #+#             */
-/*   Updated: 2025/06/24 18:11:42 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/06/26 21:13:47 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,11 +24,12 @@
 #include <fstream>
 #include <sstream>
 
+
 class LocationConfig {
 public:
     std::set<std::string> allow_methods;
     std::string root;
-    bool autoindex; // Remplacement de directory_listing par autoindex
+    bool autoindex;
     std::vector<std::string> index;
     std::map<std::string, std::string> cgi_extensions;
     std::string upload_path;
@@ -51,7 +52,7 @@ public:
     std::map<int, std::string> error_pages;
     unsigned long max_body_size;
     std::vector<LocationConfig> locations;
-    std::vector<std::string> index; // Nouvelle addition pour index au niveau du server
+    std::vector<std::string> index;
 
     ServerConfig();
     virtual ~ServerConfig();
@@ -63,13 +64,14 @@ private:
     std::string trim(const std::string& str) const;
     std::vector<std::string> split(const std::string& str, char delimiter) const;
     unsigned long parseSize(const std::string& size_str) const;
-    void parseDirective(const std::vector<std::string>& tokens, ServerConfig* current_server, LocationConfig* current_location);
-    void parseFile(const std::string& path);
+    bool parseDirective(const std::vector<std::string>& tokens, ServerConfig* current_server, LocationConfig* current_location);
+    bool parseFile(const std::string& path);
 
 public:
     Config(const std::string& path);
     virtual ~Config();
     const std::vector<ServerConfig>& getServers() const { return servers; }
+    bool error;
 };
 
 #endif
