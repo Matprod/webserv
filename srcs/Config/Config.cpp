@@ -6,7 +6,7 @@
 /*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/22 11:00:25 by Matprod           #+#    #+#             */
-/*   Updated: 2025/06/26 21:17:22 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/06/29 10:42:23 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,15 +49,19 @@ std::vector<std::string> Config::split(const std::string& str, char delimiter) c
 unsigned long Config::parseSize(const std::string& size_str) const {
 	std::string num_str = size_str;
 	char unit = '\0';
+	size_t valid_end = num_str.find_last_not_of("0123456789KMG");
+    if (valid_end != std::string::npos && valid_end + 1 < num_str.length()) {
+        num_str = num_str.substr(0, valid_end + 1);
+    }
 	if (!num_str.empty() && isalpha(num_str[num_str.length() - 1])) {
-		unit = toupper(num_str[num_str.length() - 1]);
-		num_str.erase(num_str.length() - 1);
-	}
+        unit = toupper(num_str[num_str.length() - 1]);
+        num_str.erase(num_str.length() - 1);
+    }
 	char* endptr;
-	unsigned long num = strtoul(num_str.c_str(), &endptr, 10);
+	unsigned long num = strtoul(num_str.c_str(), &endptr -1, 10);
 	if (*endptr != '\0' || num_str.empty()) {
 		std::cout << "Invalid size format: " << size_str << std::endl;
-		 return(ERROR);
+		return(ERROR);
 	}
 	if (unit == 'K') num *= 1024;
 	else if (unit == 'M') num *= 1024 * 1024;
@@ -98,12 +102,14 @@ bool Config::parseDirective(const std::vector<std::string>& tokens, ServerConfig
                 std::cout << "Invalid root directive" << std::endl;
                  return(ERROR) ;
             }
-        } else if (directive == "autoindex") {
-            if (values.size() == 1 && values[0] == "on") current_location->autoindex = true;
-            else if (values.size() == 1 && values[0] == "off") current_location->autoindex = false;
+        } else if (directive == "autoindex" || directive == "directory_listing") { // Prise en charge de directory_listing comme alias
+            if (values.size() == 1 && (values[0] == "on;" || values[0] == "on"))
+				current_location->autoindex = true;
+            else if (values.size() == 1 && (values[0] == "off;" || values[0] == "on"))
+				current_location->autoindex = false;
             else {
-                std::cout << "Invalid autoindex directive" << std::endl;
-                 return(ERROR) ;
+                std::cout << "Invalid " << directive << " directive" << std::endl;
+                return(1);
             }
         } else if (directive == "index") {
             for (size_t i = 0; i < values.size(); ++i) {
@@ -133,43 +139,38 @@ bool Config::parseDirective(const std::vector<std::string>& tokens, ServerConfig
                 current_location->redirect_status = status;
                 current_location->redirect_url = values[1];
             } else {
-                std::cout << "Invalid return directive" << std::endl;
+                std::cout << "Error: Invalid return directive" << std::endl;
                  return(ERROR) ;
             }
         } else if (directive == "alias") {
             if (values.size() == 1) {
                 current_location->alias = values[0];
             } else {
-                std::cout << "Invalid alias directive" << std::endl;
+                std::cout << "Error: Invalid alias directive" << std::endl;
                  return(ERROR) ;
             }
         } else {
-            std::cout << "Unknown location directive: " << directive << std::endl;
-             return(ERROR) ;
+            std::cout << "Error: Unknown location directive: " << directive << std::endl;
+            return(ERROR) ;
         }
     } else if (current_server) {
         if (directive == "listen") {
             if (values.size() == 1) {
                 std::string value = values[0];
-                size_t colon_pos = value.find(':');
-                if (colon_pos != std::string::npos) {
-                    current_server->host = value.substr(0, colon_pos);
-                    char* endptr;
-                    current_server->port = strtol(value.substr(colon_pos + 1).c_str(), &endptr, 10);
-                    if (*endptr != '\0') {
-                        std::cout << "Invalid port in listen directive" << std::endl;
-                         return(ERROR) ;
-                    }
-                } else {
-                    char* endptr;
-                    current_server->port = strtol(value.c_str(), &endptr, 10);
-                    if (*endptr != '\0') {
-                        std::cout << "Invalid port in listen directive" << std::endl;
-                         return(ERROR) ;
-                    }
+                // Supprimer les caractères non numériques à la fin (comme ;)
+                size_t num_end = value.find_first_not_of("0123456789");
+                if (num_end != std::string::npos) {
+                    value = value.substr(0, num_end);
                 }
-            } else {
-                std::cout << "Invalid listen directive" << std::endl;
+                char* endptr;
+                current_server->port = strtol(value.c_str(), &endptr, 10);
+                if (*endptr != '\0' || value.empty()) {
+                    std::cerr << "Error: Invalid port in listen directive" << std::endl;
+                    return(ERROR) ;
+                }
+            } 
+            else {
+                std::cout << "Error: Invalid listen directive" << std::endl;
                  return(ERROR) ;
             }
         } else if (directive == "server_name") {
@@ -179,12 +180,12 @@ bool Config::parseDirective(const std::vector<std::string>& tokens, ServerConfig
         } else if (directive == "root") {
             if (values.size() == 1) {
                 if (!current_server->root.empty()) {
-                    std::cout << "Duplicate root directive in server" << std::endl;
+                    std::cout << "Error: Duplicate root directive in server" << std::endl;
                      return(ERROR) ;
                 }
                 current_server->root = values[0];
             } else {
-                std::cout << "Invalid root directive" << std::endl;
+                std::cout << "Error: Invalid root directive" << std::endl;
                  return(ERROR) ;
             }
         } else if (directive == "error_page") {
@@ -192,19 +193,19 @@ bool Config::parseDirective(const std::vector<std::string>& tokens, ServerConfig
                 char* endptr;
                 int code = strtol(values[0].c_str(), &endptr, 10);
                 if (*endptr != '\0') {
-                    std::cout << "Invalid error_page directive" << std::endl;
+                    std::cout << "Error: Invalid error_page directive" << std::endl;
                      return(ERROR) ;
                 }
                 current_server->error_pages[code] = values[1];
             } else {
-                std::cout << "Invalid error_page directive" << std::endl;
+                 std::cout << "Error: Invalid error_page directive" << std::endl;
                  return(ERROR) ;
             }
         } else if (directive == "client_max_body_size") {
             if (values.size() == 1) {
                 current_server->max_body_size = parseSize(values[0]);
             } else {
-                std::cout << "Invalid client_max_body_size directive" << std::endl;
+                std::cout << "Error: Invalid client_max_body_size directive" << std::endl;
                  return(ERROR) ;
             }
         } else if (directive == "index") {
@@ -212,11 +213,11 @@ bool Config::parseDirective(const std::vector<std::string>& tokens, ServerConfig
                 current_server->index.push_back(values[i]);
             }
         } else {
-            std::cout << "Unknown server directive: " << directive << std::endl;
+            std::cout << "Error: Unknown server directive: " << directive << std::endl;
              return(ERROR) ;
         }
     } else {
-        std::cout << "Directive outside server block: " << tokens[0] << std::endl;
+        std::cout << "Error: Directive outside server block: " << tokens[0] << std::endl;
         return(ERROR) ;
     }
 	return (0);
@@ -225,7 +226,7 @@ bool Config::parseDirective(const std::vector<std::string>& tokens, ServerConfig
 bool Config::parseFile(const std::string& path) {
     std::ifstream file(path.c_str());
     if (!file.is_open()) {
-        std::cout << "Unable to open config file: " << path << std::endl;
+        std::cout << "Error: Unable to open config file: " << path << std::endl;
          return ERROR;
     }
 
@@ -248,7 +249,7 @@ bool Config::parseFile(const std::string& path) {
             current_location_paths.clear(); // Réinitialiser les paths pour un nouveau server
         } else if (tokens[0] == "location" && tokens.size() >= 2) {
             if (!current_server) {
-                std::cout << "Directive outside server block: location" << std::endl;
+                std::cout << "Error: Directive outside server block: location" << std::endl;
                  return ERROR;
             }
             current_server->locations.push_back(LocationConfig());
@@ -256,7 +257,7 @@ bool Config::parseFile(const std::string& path) {
             current_location->path = tokens[1];
             // Vérification des doublons de path
             if (std::find(current_location_paths.begin(), current_location_paths.end(), current_location->path) != current_location_paths.end()) {
-                std::cout << "Duplicate location path: " << current_location->path << " in server" << std::endl;
+                std::cout << "Error: Duplicate location path: " << current_location->path << " in server" << std::endl;
                 return ERROR;
             }
             current_location_paths.push_back(current_location->path);
@@ -271,14 +272,14 @@ bool Config::parseFile(const std::string& path) {
 				return ERROR;
 			}
         } else {
-            std::cout << "Directive outside server block: " << tokens[0] << std::endl;
+            std::cout << "Error: Directive outside server block: " << tokens[0] << std::endl;
             return ERROR;
         }
     }
 
     file.close();
     if (servers.empty()) {
-        std::cout << "No server block found in config file" << std::endl;
+        std::cout << "Error: No server block found in config file" << std::endl;
          return ERROR;
     }
 	return (0);
