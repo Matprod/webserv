@@ -6,7 +6,7 @@
 /*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/22 10:58:05 by Matprod           #+#    #+#             */
-/*   Updated: 2025/06/26 21:19:03 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/06/29 10:55:42 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,6 +88,8 @@ int main(int argc, char *argv[]) {
 		std::cout << "Configuration parsee a partir de : " << config_path << std::endl;
 		printConfig(config);
 	}
+	else
+		return (1);
 
 	return 0;
 }

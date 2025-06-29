@@ -6,7 +6,7 @@
 /*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/22 11:00:25 by Matprod           #+#    #+#             */
-/*   Updated: 2025/06/29 10:42:23 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/06/29 11:01:16 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,14 +60,14 @@ unsigned long Config::parseSize(const std::string& size_str) const {
 	char* endptr;
 	unsigned long num = strtoul(num_str.c_str(), &endptr -1, 10);
 	if (*endptr != '\0' || num_str.empty()) {
-		std::cout << "Invalid size format: " << size_str << std::endl;
+		std::cout << "Error: Invalid size format: " << size_str << std::endl;
 		return(ERROR);
 	}
 	if (unit == 'K') num *= 1024;
 	else if (unit == 'M') num *= 1024 * 1024;
 	else if (unit == 'G') num *= 1024 * 1024 * 1024;
 	else if (unit != '\0') {
-		std::cout << "Invalid size unit: " << size_str << std::endl;
+		std::cout << "Error: Invalid size unit: " << size_str << std::endl;
 		 return(ERROR);
 	}
 	return num;
@@ -76,7 +76,7 @@ unsigned long Config::parseSize(const std::string& size_str) const {
 bool Config::parseDirective(const std::vector<std::string>& tokens, ServerConfig* current_server, LocationConfig* current_location) {
     if (tokens.empty())
 	{
-		std::cout << "No directive in config" << std::endl;
+		std::cout << "Error: No directive in config" << std::endl;
 		return(ERROR);
 	}
     std::string directive = tokens[0];
@@ -94,13 +94,17 @@ bool Config::parseDirective(const std::vector<std::string>& tokens, ServerConfig
         } else if (directive == "root") {
             if (values.size() == 1) {
                 if (!current_location->root.empty()) {
-                    std::cout << "Duplicate root directive in location " << current_location->path << std::endl;
-                    return(ERROR) ;
+                    std::cerr << "Error: Duplicate root directive in location " << current_location->path << std::endl;
+                    return ERROR;
+                }
+                if (!current_location->alias.empty()) {
+                    std::cerr << "Error: Cannot use root and alias together in location " << current_location->path << std::endl;
+                    return ERROR;
                 }
                 current_location->root = values[0];
             } else {
-                std::cout << "Invalid root directive" << std::endl;
-                 return(ERROR) ;
+                std::cerr << "Error: Invalid root directive" << std::endl;
+                return ERROR;
             }
         } else if (directive == "autoindex" || directive == "directory_listing") { // Prise en charge de directory_listing comme alias
             if (values.size() == 1 && (values[0] == "on;" || values[0] == "on"))
@@ -119,13 +123,13 @@ bool Config::parseDirective(const std::vector<std::string>& tokens, ServerConfig
             if (values.size() == 2) {
                 current_location->cgi_extensions[values[0]] = values[1];
             } else {
-                std::cout << "Invalid cgi_extension directive" << std::endl;
+                std::cout << "Error: Invalid cgi_extension directive" << std::endl;
                  return(ERROR) ;
             }
         } else if (directive == "upload_path") {
             if (values.size() == 1) current_location->upload_path = values[0];
             else {
-                std::cout << "Invalid upload_path directive" << std::endl;
+                std::cout << "Error: Invalid upload_path directive" << std::endl;
                  return(ERROR) ;
             }
         } else if (directive == "return") {
@@ -133,7 +137,7 @@ bool Config::parseDirective(const std::vector<std::string>& tokens, ServerConfig
                 char* endptr;
                 int status = strtol(values[0].c_str(), &endptr, 10);
                 if (*endptr != '\0' || status < 300 || status > 399) {
-                    std::cout << "Invalid return status code: " << values[0] << std::endl;
+                    std::cout << "Error :Invalid return status code: " << values[0] << std::endl;
                      return(ERROR) ;
                 }
                 current_location->redirect_status = status;
@@ -144,10 +148,14 @@ bool Config::parseDirective(const std::vector<std::string>& tokens, ServerConfig
             }
         } else if (directive == "alias") {
             if (values.size() == 1) {
+                if (!current_location->root.empty()) {
+                    std::cerr << "Error: Cannot use root and alias together in location " << current_location->path << std::endl;
+                    return ERROR;
+                }
                 current_location->alias = values[0];
             } else {
-                std::cout << "Error: Invalid alias directive" << std::endl;
-                 return(ERROR) ;
+                std::cerr << "Invalid alias directive" << std::endl;
+                return ERROR;
             }
         } else {
             std::cout << "Error: Unknown location directive: " << directive << std::endl;
@@ -157,7 +165,6 @@ bool Config::parseDirective(const std::vector<std::string>& tokens, ServerConfig
         if (directive == "listen") {
             if (values.size() == 1) {
                 std::string value = values[0];
-                // Supprimer les caractères non numériques à la fin (comme ;)
                 size_t num_end = value.find_first_not_of("0123456789");
                 if (num_end != std::string::npos) {
                     value = value.substr(0, num_end);
