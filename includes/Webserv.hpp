@@ -16,6 +16,7 @@
  #include <arpa/inet.h>  // pour inet_ntop
  #include <csignal>  //pour signal
  #include <stdarg.h>
+ #include <regex.h> // pour regex
 
 
 #include <cstdlib>
@@ -47,7 +48,7 @@
 /* CUSTOM */
 
 #include "../srcs/Config/Config.hpp"
-//#include "Defines.hpp"
+#include "Defines.hpp"
  // #include "Logger.hpp"
 // #include "ArgsManager.hpp"
  // #include "Utils.hpp"
@@ -58,6 +59,5 @@
  // #include "Socket.hpp"
  // #include "ListenConfig.hpp"
 
-#define ERROR 1
 
 #endif // WEBSERV_HPP

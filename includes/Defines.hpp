@@ -38,4 +38,8 @@
 #define RESPONSE_FLAGS EPOLLIN | EPOLLRDHUP | EPOLLERR | EPOLLOUT // Quand la reponse est prete est que l'on a quelque chose a envoyer dans le socket
 #define MAX_EVENTS 100
 
+#define ERROR 1
+#define SUCCESS 0
+#define DEFAULT_PORT "8080"
+
 #endif // DEFINE_HPP

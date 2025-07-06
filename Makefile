@@ -24,4 +24,8 @@ fclean: clean
 
 re: fclean all
 
-.PHONY: all clean fclean re
+parsing:
+	chmod +x check_parsing.sh
+	./check_parsing.sh
+
+.PHONY: all clean fclean re parsing
