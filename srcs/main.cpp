@@ -6,17 +6,17 @@
 /*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/22 10:58:05 by Matprod           #+#    #+#             */
-/*   Updated: 2025/06/30 00:53:05 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/07/07 09:32:27 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Webserv.hpp"
 
-void printConfig(const Config& config) {
+bool printConfig(const Config& config) {
     const std::vector<ServerConfig>& servers = config.getServers();
     if (servers.empty()) {
         std::cout << "Aucun serveur configure." << std::endl;
-        return;
+        return ERROR;
     }
 
     for (size_t i = 0; i < servers.size(); ++i) {
@@ -77,6 +77,7 @@ void printConfig(const Config& config) {
         }
         std::cout << std::endl;
     }
+    return SUCCESS;
 }
 
 int main(int argc, char *argv[]) {
@@ -86,12 +87,13 @@ int main(int argc, char *argv[]) {
 	if (config.error != ERROR)
     {
 		std::cout << "Configuration parsee a partir de : " << config_path << std::endl;
-		printConfig(config);
+		if (printConfig(config) == ERROR)
+            return (ERROR);
 	}
 	else
-		return (1);
+		return (ERROR);
 
-	return 0;
+	return SUCCESS;
 }
 
 /* int main(int argc, char *argv[]) {

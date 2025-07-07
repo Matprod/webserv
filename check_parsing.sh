@@ -13,13 +13,13 @@ fi
 CONFIG_FILES_GOOD=(
     "config/good/allowMethod.conf"
     "config/good/customError.conf"
-    "config/good/default.conf"
     "config/good/listDirectory.conf"
     "config/good/maxBodySize.conf"
     "config/good/multipleServer.conf"
     "config/good/multipleServerName.conf"
     "config/good/redirect.conf"
     "config/good/webserv.conf"
+    "config/good/UnclosedServerBlock.conf"
 )
 
 CONFIG_FILES_BAD=(
@@ -30,6 +30,19 @@ CONFIG_FILES_BAD=(
     "config/bad/InvalidDirective.conf"
     "config/bad/InvalidIp.conf"
     "config/bad/InvalidPort.conf"
+    "config/bad/EmptyFile.conf"
+    "config/bad/EmptyRoot.conf"
+    "config/bad/InvalidAutoindex.conf"
+    "config/bad/InvalidListenFormat.conf"
+    "config/bad/InvalidMaxBodySize.conf"
+    "config/bad/InvalidRedirectStatus.conf"
+    "config/bad/MissingListenValue.conf"
+    "config/bad/MultipleRootValues.conf"
+    "config/bad/NegativeIP.conf"
+    "config/bad/OnlyComments.conf"
+    "config/bad/OverflowPort.conf"
+    "config/bad/OverlappingLocations.conf"
+    "config/bad/UnknownServerDirective.conf"
 )
 
 all_passed_good=1  # 1 = tout va bien, 0 = au moins un échec
@@ -51,7 +64,7 @@ for config in "${CONFIG_FILES_GOOD[@]}"; do
     RET=$?
 
     if [ "$RET" -eq 0 ]; then
-        echo "✔️  Succès (exit code: 0)"
+        echo "✅  Succès (exit code: 0)"
     else
         echo "❌ Échec (exit code: $RET)"
         all_passed_good=0
@@ -81,7 +94,7 @@ for config in "${CONFIG_FILES_BAD[@]}"; do
     RET=$?
 
     if [ "$RET" -eq 1 ]; then
-        echo "✔️  Succès (exit code: 1)"
+        echo "✅  Succès (exit code: 1)"
     else
         echo "❌ Échec (exit code: $RET)"
         all_passed_bad=0
@@ -94,11 +107,11 @@ done
 if [ "$all_passed_bad" -eq 1 ]; then
     echo "🎉 Tous les tests de BAD se sont bien passés."
 else
-    echo "⚠️  Au moins un test a échoué. Fichiers échoués : ${failed_bad[*]}"
+    echo "🚩  Au moins un test a échoué. Fichiers échoués : ${failed_bad[*]}"
 fi
 
 if [[ "$all_passed_bad" -eq 1 && "$all_passed_good" -eq 1 ]]; then
     echo "🎉 Tous les tests de BAD ET GOOD se sont bien passés."
 else
-    echo "⚠️  Au moins un test a échoué. Fichiers échoués (GOOD) : ${failed_good[*]}, (BAD) : ${failed_bad[*]}"
+    echo "🚩 Au moins un test a échoué. Fichiers échoués (GOOD) : ${failed_good[*]}, (BAD) : ${failed_bad[*]}"
 fi

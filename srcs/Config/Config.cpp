@@ -6,7 +6,7 @@
 /*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/22 11:00:25 by Matprod           #+#    #+#             */
-/*   Updated: 2025/07/01 11:30:30 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/07/07 10:15:14 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,9 +26,9 @@ Config::Config(const std::string& path) {
 Config::~Config() {}
 
 std::string Config::trim(const std::string& str) const {
-	size_t first = str.find_first_not_of(" \t\n");
+	size_t first = str.find_first_not_of(" \t\n;");
 	if (first == std::string::npos) return "";
-	size_t last = str.find_last_not_of(" \t\n");
+	size_t last = str.find_last_not_of(" \t\n;");
 	return str.substr(first, last - first + 1);
 }
 
@@ -73,7 +73,7 @@ unsigned long Config::parseSize(const std::string& size_str) const {
         num_str.erase(num_str.length() - 1);
     }
 	char* endptr;
-	unsigned long num = strtoul(num_str.c_str(), &endptr -1, 10);
+	unsigned long num = strtoul(num_str.c_str(), &endptr, 10);
 	if (*endptr != '\0' || num_str.empty()) {
 		std::cout << "Error: Invalid size format: " << size_str << std::endl;
 		return(ERROR);
@@ -248,7 +248,10 @@ bool Config::parseDirective(const std::vector<std::string>& tokens, ServerConfig
 			}
 		} else if (directive == "client_max_body_size") {
 			if (values.size() == 1) {
-				current_server->max_body_size = parseSize(values[0]);
+				if (parseSize(values[0]) == ERROR)
+					return (ERROR);
+				else
+					current_server->max_body_size = parseSize(values[0]);
 			} else {
 				std::cout << "Error: Invalid client_max_body_size directive" << std::endl;
 				 return(ERROR) ;
@@ -341,9 +344,5 @@ bool Config::parseFile(const std::string& path) {
 		}
 	}
 	file.close();
-	/* if (servers.empty()) {
-		std::cerr << "No server block found in config file" << std::endl;
-		return ERROR;
-	} */
 	return (0);
 }
