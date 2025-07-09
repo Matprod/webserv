@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
+/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/22 11:00:25 by Matprod           #+#    #+#             */
-/*   Updated: 2025/07/07 10:15:14 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/07/09 14:16:45 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,8 +15,12 @@
 LocationConfig::LocationConfig() : autoindex(false), redirect_status(0) {}
 LocationConfig::~LocationConfig() {}
 
-ServerConfig::ServerConfig() : port(8080), max_body_size(1048576) {}
-ServerConfig::~ServerConfig() {}
+ServerConfig::ServerConfig() : port(8080), max_body_size(1048576), socketFd(0) {}
+
+ServerConfig::~ServerConfig() {
+	if (socketFd > 0)
+		close (socketFd);
+}
 
 Config::Config(const std::string& path) {
 	this->error = 0;

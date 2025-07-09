@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
+/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/22 10:58:52 by Matprod           #+#    #+#             */
-/*   Updated: 2025/06/26 21:13:47 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/07/09 14:23:05 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@
 #include <sstream>
 
 
-class LocationConfig {
+class LocationConfig {// Need to be in canonical form ?
 public:
     std::set<std::string> allow_methods;
     std::string root;
@@ -43,7 +43,7 @@ public:
     
 };
 
-class ServerConfig {
+class ServerConfig { // Need to be in canonical form ?
 public:
     int port;
     std::string host;
@@ -53,7 +53,9 @@ public:
     unsigned long max_body_size;
     std::vector<LocationConfig> locations;
     std::vector<std::string> index;
-
+	
+	int socketFd;
+	
     ServerConfig();
     virtual ~ServerConfig();
 };
@@ -70,7 +72,8 @@ private:
 public:
     Config(const std::string& path);
     virtual ~Config();
-    const std::vector<ServerConfig>& getServers() const { return servers; }
+    std::vector<ServerConfig>& getServers() { return servers; } //Interdit de declarer direct dans .h
+	const std::vector<ServerConfig>& getServers() const { return servers; }
     bool error;
 };
 

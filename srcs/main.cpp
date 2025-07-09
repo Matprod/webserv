@@ -3,14 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
+/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/22 10:58:05 by Matprod           #+#    #+#             */
-/*   Updated: 2025/07/07 09:32:27 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/07/09 14:24:45 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Webserv.hpp"
+#include "Socket.hpp"
 
 bool printConfig(const Config& config) {
     const std::vector<ServerConfig>& servers = config.getServers();
@@ -82,6 +83,7 @@ bool printConfig(const Config& config) {
 
 int main(int argc, char *argv[]) {
 	std::string config_path = (argc > 1) ? argv[1] : "default.conf";
+	//STEP 1: Get/Parse Server Config Files
 	Config config(config_path);
 
 	if (config.error != ERROR)
@@ -89,6 +91,9 @@ int main(int argc, char *argv[]) {
 		std::cout << "Configuration parsee a partir de : " << config_path << std::endl;
 		if (printConfig(config) == ERROR)
             return (ERROR);
+			
+		//STEP 2: Create Sockets for each server
+		setupSockets(config.getServers());
 	}
 	else
 		return (ERROR);
