@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Webserv.hpp                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/07/13 21:38:06 by Matprod           #+#    #+#             */
+/*   Updated: 2025/07/13 21:38:06 by Matprod          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #pragma once
 #ifndef WEBSERV_HPP
 #define WEBSERV_HPP
@@ -48,6 +60,7 @@
 /* CUSTOM */
 
 #include "../srcs/Config/Config.hpp"
+#include "../srcs/Server/Socket.hpp"
 #include "Defines.hpp"
  // #include "Logger.hpp"
 // #include "ArgsManager.hpp"
@@ -56,7 +69,6 @@
  // #include "BlocLocation.hpp"
  // #include "BlocServer.hpp"
 // #include "Server.hpp"
- // #include "Socket.hpp"
  // #include "ListenConfig.hpp"
 
 
