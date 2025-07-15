@@ -6,7 +6,7 @@
 /*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/08 14:07:08 by allan             #+#    #+#             */
-/*   Updated: 2025/07/09 14:17:46 by allan            ###   ########.fr       */
+/*   Updated: 2025/07/15 13:48:11 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@
 #include <errno.h>          // For errno
 #include <cstdio>           // For perror()
 
-#include "Config.hpp"
+#include "../Config/Config.hpp"
 
 
 void setupSockets(std::vector<ServerConfig>& config);

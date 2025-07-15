@@ -6,12 +6,13 @@
 /*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/22 10:58:05 by Matprod           #+#    #+#             */
-/*   Updated: 2025/07/09 14:24:45 by allan            ###   ########.fr       */
+/*   Updated: 2025/07/15 13:41:18by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Webserv.hpp"
-#include "Socket.hpp"
+#include "./Server/Socket.hpp"
+#include "./Server/Server.hpp"
 
 bool printConfig(const Config& config) {
     const std::vector<ServerConfig>& servers = config.getServers();
@@ -94,6 +95,7 @@ int main(int argc, char *argv[]) {
 			
 		//STEP 2: Create Sockets for each server
 		setupSockets(config.getServers());
+		serverLoop(config.getServers());
 	}
 	else
 		return (ERROR);

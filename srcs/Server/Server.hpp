@@ -6,7 +6,7 @@
 /*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 15:03:56 by allan             #+#    #+#             */
-/*   Updated: 2025/07/09 15:04:50 by allan            ###   ########.fr       */
+/*   Updated: 2025/07/15 13:48:39 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,9 +16,12 @@
 #include <string>
 #include <iostream>
 #include <vector>
+#include <map>
+#include <poll.h>
 
-#include "Config.hpp"
+#include "../Config/Config.hpp"
 
+int serverLoop(const std::vector<ServerConfig>& servers);
 
 
 #endif

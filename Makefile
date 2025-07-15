@@ -3,7 +3,11 @@ NAME = webserv
 CXX = g++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
-SRCS = srcs/main.cpp srcs/Config/Config.cpp
+SRCS = 	srcs/main.cpp \
+		srcs/Config/Config.cpp \
+		srcs/Server/Socket.cpp \
+		srcs/Server/Server.cpp
+		
 OBJS = $(SRCS:.cpp=.o)
 
 INCLUDES = -I include
