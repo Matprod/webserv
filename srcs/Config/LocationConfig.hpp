@@ -1,30 +1,39 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Server.hpp                                         :+:      :+:    :+:   */
+/*   LocationConfig.hpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/07/09 15:03:56 by allan             #+#    #+#             */
-/*   Updated: 2025/07/15 20:29:05 by Matprod          ###   ########.fr       */
+/*   Created: 2025/07/12 20:15:57 by Matprod           #+#    #+#             */
+/*   Updated: 2025/07/13 21:41:15 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef SERVER_HPP
-#define SERVER_HPP
+#pragma once
 
 #include <string>
-#include <iostream>
 #include <vector>
 #include <map>
-#include <poll.h>
-
-#include "../Config/Config.hpp"
-#include "../Request/Request.hpp"
-
-#define CLIENT_TIMEOUT 10
-
-int serverLoop(const std::vector<ServerConfig>& servers);
+#include <set>
+#include <cstdlib>
+# include <iostream>
 
 
-#endif
+class LocationConfig {// Need to be in canonical form ?
+public:
+	std::set<std::string> allow_methods;
+	std::string root;
+	bool autoindex;
+	std::vector<std::string> index;
+	std::map<std::string, std::string> cgi_extensions;
+	std::string upload_path;
+	std::string path;
+	int redirect_status;
+	std::string redirect_url;
+	std::string alias;
+
+	LocationConfig();
+	virtual ~LocationConfig();
+};
+

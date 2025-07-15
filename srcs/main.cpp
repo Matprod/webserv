@@ -89,9 +89,9 @@ int main(int argc, char *argv[]) {
 
 	if (config.error != ERROR)
     {
-		std::cout << "Configuration parsee a partir de : " << config_path << std::endl;
+		/* std::cout << "Configuration parsee a partir de : " << config_path << std::endl;
 		if (printConfig(config) == ERROR)
-            return (ERROR);
+			return (ERROR); */
 			
 		//STEP 2: Create Sockets for each server
 		setupSockets(config.getServers());
