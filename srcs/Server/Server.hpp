@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
+/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 15:03:56 by allan             #+#    #+#             */
-/*   Updated: 2025/07/15 20:29:05 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/07/16 19:50:19 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,8 @@
 
 #include "../Config/Config.hpp"
 #include "../Request/Request.hpp"
+#include "../Response/Response.hpp"
+#include "Client.hpp"
 
 #define CLIENT_TIMEOUT 10
 

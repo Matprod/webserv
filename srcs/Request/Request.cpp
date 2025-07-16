@@ -6,7 +6,7 @@
 /*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:44:20 by allan             #+#    #+#             */
-/*   Updated: 2025/07/15 20:21:48 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/07/16 14:58:19 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ int parse_request(int socket, Request& req, std::map<int, std::string>& buffers,
 
 	size_t body_start = header_end + 4;
 
-	// 🔽 Parse ligne de requête
+	// Parse ligne de requête
 	std::istringstream iss(request.substr(0, header_end));
 	std::string request_line;
 	if (!std::getline(iss, request_line)) return REQUEST_ERROR;
@@ -56,7 +56,7 @@ int parse_request(int socket, Request& req, std::map<int, std::string>& buffers,
 	req.version = request_line.substr(uri_end + 1);
 	req.version.erase(req.version.find_last_not_of(" \t\r\n") + 1);
 
-	// 🔽 Parse headers
+	// Parse headers
 	std::string line;
 	while (std::getline(iss, line)) {
 		if (line == "\r" || line.empty()) break;
@@ -73,7 +73,7 @@ int parse_request(int socket, Request& req, std::map<int, std::string>& buffers,
 		}
 	}
 
-	// 🔽 Gérer Body
+	// Gérer Body
 	bool is_chunked = req.headers.count("transfer-encoding") && to_lower(req.headers["transfer-encoding"]) == "chunked";
 	size_t content_length = 0;
 	if (!is_chunked && req.headers.count("content-length")) {
