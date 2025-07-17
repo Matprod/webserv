@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
+/*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:29:23 by allan             #+#    #+#             */
-/*   Updated: 2025/07/16 19:51:50 by allan            ###   ########.fr       */
+/*   Updated: 2025/07/17 19:03:50 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,10 +67,22 @@ int serverLoop(const std::vector<ServerConfig>& servers) {
 					handle_new_connection(fds[i].fd, fds, isServerFd, lastActivity);
 				}
 				else {
-					Request req = handle_client_request(fds[i].fd, fds, i, isServerFd, clientBuffers, lastActivity);
-					Response res = buildResponse(req);
-					std::string rawResponse = res.responseToString();
-					send(fds[i].fd, rawResponse.c_str(), rawResponse.size(), 0);
+					Request req;
+					int parse_status = handle_client_request(fds[i].fd, fds, i, isServerFd, clientBuffers, lastActivity, req);
+
+					if (parse_status == REQUEST_OK) {
+						Response res = buildResponse(req);
+						std::string rawResponse = res.responseToString();
+						send(fds[i].fd, rawResponse.c_str(), rawResponse.size(), 0);
+					}
+					else if (parse_status == REQUEST_INCOMPLETE) {
+						// WAITING
+						continue;
+					}
+					else if (parse_status == REQUEST_ERROR) {
+						// CLOSED
+						continue;
+					}
 				}
 			}
 		}

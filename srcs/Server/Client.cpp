@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
+/*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:42:06 by allan             #+#    #+#             */
-/*   Updated: 2025/07/16 19:51:17 by allan            ###   ########.fr       */
+/*   Updated: 2025/07/17 18:57:52 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,12 +40,12 @@ void close_client(int fd, std::vector<pollfd>& fds, std::map<int, bool>& isServe
 	}
 }
 
-Request handle_client_request(int fd, std::vector<pollfd>& fds, int& i,
+int handle_client_request(int fd, std::vector<pollfd>& fds, int& i,
 	std::map<int, bool>& isServerFd,
 	std::map<int, std::string>& clientBuffers,
-	std::map<int, time_t>& lastActivity) {
-
-	Request req;
+	std::map<int, time_t>& lastActivity,
+	Request& req)
+{
 	std::cout << "Parsing request" << std::endl;
 	int result = parse_request(fd, req, clientBuffers, lastActivity);
 
@@ -53,6 +53,7 @@ Request handle_client_request(int fd, std::vector<pollfd>& fds, int& i,
 		std::cerr << "Erreur de parsing de la requête.\n";
 		close_client(fd, fds, isServerFd, clientBuffers, lastActivity);
 		--i;
+		return REQUEST_ERROR;
 	}
 	else if (result == REQUEST_OK) {
 		std::cout << "Requête complète reçue !" << std::endl;
@@ -69,12 +70,10 @@ Request handle_client_request(int fd, std::vector<pollfd>& fds, int& i,
 		}
 		else {
 			std::cout << "Connexion maintenue en keep-alive\n";
-			// keep taking request from the client
 		}
 	}
 	else if (result == REQUEST_INCOMPLETE) {
 		std::cout << "Requête incomplète, on attend la suite...\n";
-		// buffer is saved
 	}
-	return req;
+	return result;
 }
