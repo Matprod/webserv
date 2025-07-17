@@ -6,7 +6,7 @@
 /*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:45:12 by allan             #+#    #+#             */
-/*   Updated: 2025/07/16 15:16:53 by allan            ###   ########.fr       */
+/*   Updated: 2025/07/16 20:09:06 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ Response handleGet() {
 	res.statusCode = 200;
 	res.statusMessage = getStatusMessage(200);
 	res.headers["Content-Type"] = "text/html";
-	res.headers["Content-Lenght"] = toString<size_t>(res.body.size());
+	res.headers["Content-Length"] = toString<size_t>(res.body.size());
 	return res;
 }
 
@@ -52,7 +52,7 @@ Response handlePost(const Request& request) {
 	res.statusCode = 200;
 	res.statusMessage = getStatusMessage(200);
 	res.headers["Content-Type"] = "text/plain";
-	res.headers["Content-Lenght"] = toString<size_t>(res.body.size());
+	res.headers["Content-Length"] = toString<size_t>(res.body.size());
 	return res;
 }
 
