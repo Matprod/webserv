@@ -6,7 +6,7 @@
 /*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:29:23 by allan             #+#    #+#             */
-/*   Updated: 2025/07/17 19:03:50 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/07/18 18:00:12 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,7 +71,7 @@ int serverLoop(const std::vector<ServerConfig>& servers) {
 					int parse_status = handle_client_request(fds[i].fd, fds, i, isServerFd, clientBuffers, lastActivity, req);
 
 					if (parse_status == REQUEST_OK) {
-						Response res = buildResponse(req);
+						Response res = buildResponse(req, servers);
 						std::string rawResponse = res.responseToString();
 						send(fds[i].fd, rawResponse.c_str(), rawResponse.size(), 0);
 					}

@@ -3,17 +3,59 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
+/*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/07/09 14:45:12 by allan             #+#    #+#             */
-/*   Updated: 2025/07/16 20:09:06 by allan            ###   ########.fr       */
+/*   Created: 2025/07/18 16:17:30 by Matprod           #+#    #+#             */
+/*   Updated: 2025/07/18 19:30:00 by Matprod          ###   fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Response.hpp"
 
+Response buildResponse(const Request& request, const std::vector<ServerConfig>& servers) {
+	Response res;
+	res.version = "HTTP/1.1";
 
-Response buildResponse(const Request& request) {
+	// Trouver le serveur correspondant
+	ServerConfig* server = findMatchingServer(request, servers);
+	if (!server) {
+		res.statusCode = 400;
+		res.statusMessage = getStatusMessage(400);
+		res.body = "Bad Request: No matching server";
+		res.headers["Content-Type"] = "text/plain";
+		res.headers["Content-Length"] = toString<size_t>(res.body.size());
+		return res;
+	}
+
+	// Trouver le bloc location correspondant
+	LocationConfig* loc = findMatchingLocation(request.uri, server->locations);
+	if (!loc) {
+		res.statusCode = 404;
+		res.statusMessage = getStatusMessage(404);
+		res.body = "Not Found";
+		res.headers["Content-Type"] = "text/plain";
+		res.headers["Content-Length"] = toString<size_t>(res.body.size());
+		return res;
+	}
+
+	// Gérer les redirections
+	if (loc->redirect_status >= 300 && loc->redirect_status <= 399) {
+		res.statusCode = loc->redirect_status;
+		res.statusMessage = getStatusMessage(loc->redirect_status);
+		res.headers["Location"] = loc->redirect_url;
+		res.body = "Redirecting to " + loc->redirect_url;
+		res.headers["Content-Type"] = "text/plain";
+		res.headers["Content-Length"] = toString<size_t>(res.body.size());
+		return res;
+	}
+
+	// Vérifier si c'est une requête CGI
+	std::string extension = getFileExtension(request.uri);
+	if (!loc->cgi_extensions.empty() && loc->cgi_extensions.find(extension) != loc->cgi_extensions.end()) {
+		return executeCGI(request, *loc, *server);
+	}
+
+	// Gérer les méthodes HTTP
 	if (request.method == "GET") {
 		return handleGet();
 	} else if (request.method == "POST") {
@@ -21,14 +63,12 @@ Response buildResponse(const Request& request) {
 	} else if (request.method == "DELETE") {
 		return handleDelete();
 	} else {
-		Response res;
-        res.version = "HTTP/1.1";
-        res.statusCode = 405;
-        res.statusMessage = getStatusMessage(405);
-        res.headers["Content-Type"] = "text/plain";
-        res.body = "Method Not Allowed";
-        res.headers["Content-Length"] = toString<size_t>(res.body.size());
-        return res;
+		res.statusCode = 405;
+		res.statusMessage = getStatusMessage(405);
+		res.body = "Method Not Allowed";
+		res.headers["Content-Type"] = "text/plain";
+		res.headers["Content-Length"] = toString<size_t>(res.body.size());
+		return res;
 	}
 }
 
@@ -65,9 +105,9 @@ Response handleDelete() {
 	return res;
 }
 
+
 std::string Response::responseToString() const {
 	std::ostringstream oss;
-
 	oss << version << " " << statusCode << " " << statusMessage << "\r\n";
 	for (std::map<std::string, std::string>::const_iterator it = headers.begin(); it != headers.end(); ++it) {
 		oss << it->first << ": " << it->second << "\r\n";
@@ -81,30 +121,12 @@ std::string getStatusMessage(int statusCode) {
 		case 200: return "OK";
 		case 201: return "Created";
 		case 204: return "No Content";
+		case 301: return "Moved Permanently";
+		case 302: return "Found";
 		case 400: return "Bad Request";
 		case 404: return "Not Found";
-		case 405: return "Method not Allowed";
+		case 405: return "Method Not Allowed";
 		case 500: return "Internal Server Error";
 	}
 	return "Unknown";
 }
-
-/* 
-	HTTP status codes are grouped into 5 classes:
-		1xx → Informational
-		2xx → Success (200 OK, 201 Created)
-		3xx → Redirection (301, 302)
-		4xx → Client errors (400 Bad Request, 404 Not Found)
-		5xx → Server errors (500 Internal Server Error) 
-*/
-
-/* 
-	GET: Server sends back the requested resource (HTML page, image, etc.).
-	POST: Usually processes data and returns a result or confirmation.
-	DELETE: Returns confirmation (204 No Content or 200 OK).
-	
-	Each method expects certain status codes:
-		GET → 200 OK or 404 Not Found
-		POST → 201 Created, 200 OK, or 400 Bad Request
-		DELETE → 200 OK or 204 No Content
- */

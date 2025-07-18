@@ -6,22 +6,53 @@
 /*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 20:16:00 by Matprod           #+#    #+#             */
-/*   Updated: 2025/07/17 19:38:27 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/07/18 11:52:56 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "LocationConfig.hpp"
 #include "Config.hpp"
 
+LocationConfig::LocationConfig() : autoindex(false), redirect_status(0) {}
+LocationConfig::~LocationConfig() {}
+
+LocationConfig::LocationConfig(const LocationConfig& other)
+	: allow_methods(other.allow_methods),
+	  root(other.root),
+	  autoindex(other.autoindex),
+	  index(other.index),
+	  cgi_extensions(other.cgi_extensions),
+	  upload_path(other.upload_path),
+	  path(other.path),
+	  redirect_status(other.redirect_status),
+	  redirect_url(other.redirect_url),
+	  alias(other.alias) {}
+
+LocationConfig& LocationConfig::operator=(const LocationConfig& other) {
+	if (this != &other) {
+		allow_methods = other.allow_methods;
+		root = other.root;
+		autoindex = other.autoindex;
+		index = other.index;
+		cgi_extensions = other.cgi_extensions;
+		upload_path = other.upload_path;
+		path = other.path;
+		redirect_status = other.redirect_status;
+		redirect_url = other.redirect_url;
+		alias = other.alias;
+	}
+	return *this;
+}
+
 void print_vector(const std::vector<std::string>& vec) {
-    std::cout << "Vector contents: [";
-    for (size_t i = 0; i < vec.size(); ++i) {
-        std::cout << "\"" << vec[i] << "\"";
-        if (i < vec.size() - 1) {
-            std::cout << ", ";
-        }
-    }
-    std::cout << "]" << std::endl;
+	std::cout << "Vector contents: [";
+	for (size_t i = 0; i < vec.size(); ++i) {
+		std::cout << "\"" << vec[i] << "\"";
+		if (i < vec.size() - 1) {
+			std::cout << ", ";
+		}
+	}
+	std::cout << "]" << std::endl;
 }
 
 bool Config::parseLocationDirective(const std::string& directive, const std::vector<std::string>& values, LocationConfig* loc) {

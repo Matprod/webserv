@@ -6,13 +6,46 @@
 /*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 20:07:43 by Matprod           #+#    #+#             */
-/*   Updated: 2025/07/13 21:37:04 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/07/18 12:06:26 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ServerConfig.hpp"
 #include "Config.hpp"
 
+
+ServerConfig::ServerConfig() : port(8080), max_body_size(1048576), socketFd(0) {}
+
+ServerConfig::~ServerConfig() {
+	if (socketFd > 0)
+		close (socketFd);
+}
+
+ServerConfig::ServerConfig(const ServerConfig& other)
+	: port(other.port),
+	  host(other.host),
+	  server_names(other.server_names),
+	  root(other.root),
+	  error_pages(other.error_pages),
+	  max_body_size(other.max_body_size),
+	  locations(other.locations),
+	  index(other.index),
+	  socketFd(other.socketFd) {}
+
+ServerConfig& ServerConfig::operator=(const ServerConfig& other) {
+	if (this != &other) {
+		port = other.port;
+		host = other.host;
+		server_names = other.server_names;
+		root = other.root;
+		error_pages = other.error_pages;
+		max_body_size = other.max_body_size;
+		locations = other.locations;
+		index = other.index;
+		socketFd = other.socketFd;
+	}
+	return *this;
+}
 
 static int is_valid_ipv4(const char *ip) {
 	regex_t regex;

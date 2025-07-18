@@ -6,7 +6,7 @@
 /*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 20:15:57 by Matprod           #+#    #+#             */
-/*   Updated: 2025/07/13 21:41:15 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/07/18 12:02:43 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@
 # include <iostream>
 
 
-class LocationConfig {// Need to be in canonical form ?
+class LocationConfig {
 public:
 	std::set<std::string> allow_methods;
 	std::string root;
@@ -34,6 +34,8 @@ public:
 	std::string alias;
 
 	LocationConfig();
-	virtual ~LocationConfig();
+	LocationConfig(const LocationConfig& other);
+	LocationConfig& operator=(const LocationConfig& other);
+	~LocationConfig(); 
 };
 

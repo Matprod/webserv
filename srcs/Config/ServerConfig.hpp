@@ -6,7 +6,7 @@
 /*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 20:09:14 by Matprod           #+#    #+#             */
-/*   Updated: 2025/07/13 21:36:02 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/07/18 12:01:33 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@
 #include <map>
 #include <set>
 
-class ServerConfig { // Need to be in canonical form ?
+class ServerConfig {
 public:
 	int port;
 	std::string host;
@@ -33,5 +33,7 @@ public:
 	int ServerLoop(const std::vector<ServerConfig>& servers);
 	
 	ServerConfig();
-	virtual ~ServerConfig();
+	ServerConfig(const ServerConfig& other);
+	ServerConfig& operator=(const ServerConfig& other);
+	virtual ~ServerConfig();  
 };
