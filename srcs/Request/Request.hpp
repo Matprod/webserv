@@ -6,13 +6,14 @@
 /*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 17:04:21 by Matprod           #+#    #+#             */
-/*   Updated: 2025/07/15 20:22:00 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/07/18 10:49:22 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
 #include "../../includes/Webserv.hpp"
+#include "RequestBody.hpp"
 
 #define MAX_BODY_SIZE 1048576 // 1 Mo max
 

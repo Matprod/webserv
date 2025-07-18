@@ -9,6 +9,7 @@ SRCS = 	srcs/main.cpp \
 		srcs/Server/Server.cpp \
 		srcs/Server/Client.cpp \
 		srcs/Request/Request.cpp \
+		srcs/Request/RequestBody.cpp \
 		srcs/Response/Response.cpp \
 		srcs/Config/ServerConfig.cpp \
 		srcs/Config/LocationConfig.cpp \

@@ -6,13 +6,23 @@
 /*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 20:16:00 by Matprod           #+#    #+#             */
-/*   Updated: 2025/07/13 21:41:17 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/07/17 19:38:27 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "LocationConfig.hpp"
 #include "Config.hpp"
 
+void print_vector(const std::vector<std::string>& vec) {
+    std::cout << "Vector contents: [";
+    for (size_t i = 0; i < vec.size(); ++i) {
+        std::cout << "\"" << vec[i] << "\"";
+        if (i < vec.size() - 1) {
+            std::cout << ", ";
+        }
+    }
+    std::cout << "]" << std::endl;
+}
 
 bool Config::parseLocationDirective(const std::string& directive, const std::vector<std::string>& values, LocationConfig* loc) {
 	if (directive == "allow_methods") {
@@ -62,6 +72,7 @@ bool Config::parseLocationDirective(const std::string& directive, const std::vec
 		loc->upload_path = values[0];
 	} else if (directive == "return") {
 		if (values.size() != 2) {
+			print_vector(values);
 			std::cerr << "Error: Invalid return directive" << std::endl;
 			return ERROR;
 		}
