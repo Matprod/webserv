@@ -12,7 +12,6 @@
 
 #include "CgiExecutor.hpp"
 
-// Extrait l'extension du fichier à partir de l'URI
 std::string getFileExtension(const std::string& uri) {
 	size_t dot_pos = uri.find_last_of('.');
 	if (dot_pos == std::string::npos || dot_pos == uri.size() - 1)
@@ -20,7 +19,6 @@ std::string getFileExtension(const std::string& uri) {
 	return uri.substr(dot_pos);
 }
 
-// Extrait le nom du script à partir de l'URI
 std::string getScriptName(const std::string& uri) {
 	size_t last_slash = uri.find_last_of('/');
 	if (last_slash == std::string::npos)
@@ -28,7 +26,6 @@ std::string getScriptName(const std::string& uri) {
 	return uri.substr(last_slash);
 }
 
-// Calcule PATH_INFO
 std::string getPathInfo(const std::string& uri, const std::string& script_name) {
 	size_t script_pos = uri.find(script_name);
 	if (script_pos == std::string::npos)
@@ -36,7 +33,6 @@ std::string getPathInfo(const std::string& uri, const std::string& script_name) 
 	return uri.substr(script_pos + script_name.length());
 }
 
-// Trouve le serveur correspondant à la requête
 ServerConfig* findMatchingServer(const Request& req, const std::vector<ServerConfig>& servers) {
 	for (size_t i = 0; i < servers.size(); ++i) {
 		for (std::vector<std::string>::const_iterator name = servers[i].server_names.begin(); name != servers[i].server_names.end(); ++name) {
@@ -48,7 +44,6 @@ ServerConfig* findMatchingServer(const Request& req, const std::vector<ServerCon
 	return servers.empty() ? NULL : const_cast<ServerConfig*>(&servers[0]);
 }
 
-// Trouve le bloc location correspondant à l'URI
 LocationConfig* findMatchingLocation(const std::string& uri, const std::vector<LocationConfig>& locations) {
 	LocationConfig* best_match = NULL;
 	size_t longest_match = 0;
@@ -61,7 +56,6 @@ LocationConfig* findMatchingLocation(const std::string& uri, const std::vector<L
 	return best_match;
 }
 
-// Exécute un script CGI
 Response executeCGI(const Request& req, const LocationConfig& loc, const ServerConfig& server) {
 	Response res;
 	res.version = "HTTP/1.1";
@@ -80,7 +74,6 @@ Response executeCGI(const Request& req, const LocationConfig& loc, const ServerC
 	std::string scriptPath = loc.root + scriptName;
 	std::string pathInfo = getPathInfo(req.uri, scriptName);
 
-	// Vérifier si le script existe
 	if (access(scriptPath.c_str(), F_OK) != 0) {
 		res.statusCode = 404;
 		res.statusMessage = getStatusMessage(404);
