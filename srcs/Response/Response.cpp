@@ -6,7 +6,7 @@
 /*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:45:12 by allan             #+#    #+#             */
-/*   Updated: 2025/07/22 16:32:34 by allan            ###   ########.fr       */
+/*   Updated: 2025/07/22 17:39:07 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -107,7 +107,7 @@ int File::getFileData(const Request& request) {
 	}
 	
 	//STEP 2: Check that Header Content-Length is present and Valid
-	std::map<std::string,std::string>::const_iterator itLength = headers.find("Content-Length:"); 
+	std::map<std::string,std::string>::const_iterator itLength = headers.find("content-length"); 
 	if (itLength == headers.end()) {
 		response.createResponse(411, "");
 		return ERROR; //Need to have a Content-Lenght 
