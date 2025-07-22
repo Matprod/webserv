@@ -64,7 +64,7 @@ Response executeCGI(const Request& req, const LocationConfig& loc, const ServerC
 		res.statusCode = 404;
 		res.statusMessage = getStatusMessage(404);
 		res.body = "CGI Extension Not Supported";
-		res.headers["Content-Type"] = "text/plain";
+		res.headers["Content-Type"] = "text/html";
 		res.headers["Content-Length"] = toString<size_t>(res.body.size());
 		return res;
 	}
@@ -78,7 +78,7 @@ Response executeCGI(const Request& req, const LocationConfig& loc, const ServerC
 		res.statusCode = 404;
 		res.statusMessage = getStatusMessage(404);
 		res.body = "CGI Script Not Found";
-		res.headers["Content-Type"] = "text/plain";
+		res.headers["Content-Type"] = "text/html";
 		res.headers["Content-Length"] = toString<size_t>(res.body.size());
 		return res;
 	}
@@ -91,7 +91,7 @@ Response executeCGI(const Request& req, const LocationConfig& loc, const ServerC
 		res.statusCode = 500;
 		res.statusMessage = getStatusMessage(500);
 		res.body = "Internal Server Error: Pipe Failed";
-		res.headers["Content-Type"] = "text/plain";
+		res.headers["Content-Type"] = "text/html";
 		res.headers["Content-Length"] = toString<size_t>(res.body.size());
 		return res;
 	}
@@ -103,11 +103,10 @@ Response executeCGI(const Request& req, const LocationConfig& loc, const ServerC
 		res.body = "Internal Server Error: Fork Failed";
 		close(pipe_in[0]); close(pipe_in[1]);
 		close(pipe_out[0]); close(pipe_out[1]);
-		res.headers["Content-Type"] = "text/plain";
+		res.headers["Content-Type"] = "text/html";
 		res.headers["Content-Length"] = toString<size_t>(res.body.size());
 		return res;
 	}
-
 	if (pid == 0) { // Processus fils
 		dup2(pipe_in[0], STDIN_FILENO);
 		close(pipe_in[0]);
@@ -129,6 +128,7 @@ Response executeCGI(const Request& req, const LocationConfig& loc, const ServerC
 		env.push_back("SERVER_PORT=" + toString<int>(server.port));
 		env.push_back("SERVER_PROTOCOL=HTTP/1.1");
 		env.push_back("GATEWAY_INTERFACE=CGI/1.1");
+		env.push_back("REDIRECT_STATUS=200");
 		for (std::map<std::string, std::string>::const_iterator h = req.headers.begin(); h != req.headers.end(); ++h) {
 			env.push_back("HTTP_" + to_lower(h->first) + "=" + h->second);
 		}
@@ -160,6 +160,7 @@ Response executeCGI(const Request& req, const LocationConfig& loc, const ServerC
 		buffer[bytes_read] = '\0';
 		cgiOutput += buffer;
 	}
+	std::cout << "Raw CGI Output for " << scriptPath << ": " << cgiOutput << std::endl;
 	close(pipe_out[0]);
 
 	int status;
@@ -169,14 +170,15 @@ Response executeCGI(const Request& req, const LocationConfig& loc, const ServerC
 		res.statusCode = 200;
 		res.statusMessage = getStatusMessage(200);
 		size_t header_end = cgiOutput.find("\r\n\r\n");
+		if (header_end == std::string::npos)
+			header_end = cgiOutput.find("\n\n");
 		if (header_end != std::string::npos) {
 			std::string headers_str = cgiOutput.substr(0, header_end);
-			res.body = cgiOutput.substr(header_end + 4);
+			res.body = cgiOutput.substr(header_end + (cgiOutput[header_end + 2] == '\r' ? 4 : 2)); // Ajuste selon \r\n ou \n
 			std::istringstream header_stream(headers_str);
 			std::string line;
-			while (std::getline(header_stream, line) && line != "\r") {
-				if (!line.empty() && line[line.size() - 1] == '\r')
-					line.erase(line.size() - 1);
+			while (std::getline(header_stream, line) && !line.empty()) {
+				if (line[line.size() - 1] == '\r') line.erase(line.size() - 1);
 				size_t colon_pos = line.find(':');
 				if (colon_pos != std::string::npos) {
 					std::string key = line.substr(0, colon_pos);
@@ -185,16 +187,17 @@ Response executeCGI(const Request& req, const LocationConfig& loc, const ServerC
 					res.headers[key] = value;
 				}
 			}
+
 		} else {
 			res.body = cgiOutput;
-			res.headers["Content-Type"] = "text/plain";
+			res.headers["Content-Type"] = "text/html";
 		}
 		res.headers["Content-Length"] = toString<size_t>(res.body.size());
 	} else {
 		res.statusCode = 500;
 		res.statusMessage = getStatusMessage(500);
-		res.body = "CGI Execution Failed";
-		res.headers["Content-Type"] = "text/plain";
+		res.body = "CGI Execution Failed ";
+		res.headers["Content-Type"] = "text/html";
 		res.headers["Content-Length"] = toString<size_t>(res.body.size());
 	}
 	return res;

@@ -6,7 +6,7 @@
 /*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:42:06 by allan             #+#    #+#             */
-/*   Updated: 2025/07/17 18:57:52 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/07/22 23:33:33 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,18 +46,18 @@ int handle_client_request(int fd, std::vector<pollfd>& fds, int& i,
 	std::map<int, time_t>& lastActivity,
 	Request& req)
 {
-	std::cout << "Parsing request" << std::endl;
+	//std::cout << "Parsing request" << std::endl;
 	int result = parse_request(fd, req, clientBuffers, lastActivity);
 
 	if (result == REQUEST_ERROR) {
-		std::cerr << "Erreur de parsing de la requête.\n";
+		std::cerr << "Error of parsing for thr request\n";
 		close_client(fd, fds, isServerFd, clientBuffers, lastActivity);
 		--i;
 		return REQUEST_ERROR;
 	}
 	else if (result == REQUEST_OK) {
-		std::cout << "Requête complète reçue !" << std::endl;
-		std::cout << "Méthode : " << req.method << "\n";
+		std::cout << "Request received!" << std::endl;
+		std::cout << "Method : " << req.method << "\n";
 		std::cout << "URI : " << req.uri << "\n";
 		std::cout << "Version : " << req.version << "\n";
 
@@ -69,11 +69,11 @@ int handle_client_request(int fd, std::vector<pollfd>& fds, int& i,
 			--i;
 		}
 		else {
-			std::cout << "Connexion maintenue en keep-alive\n";
+			std::cout << "Connexion in keep alive" << std::endl;;
 		}
 	}
 	else if (result == REQUEST_INCOMPLETE) {
-		std::cout << "Requête incomplète, on attend la suite...\n";
+		//std::cout << "Incomplete request..\n";
 	}
 	return result;
 }
