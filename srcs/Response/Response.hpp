@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
+/*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 13:58:27 by allan             #+#    #+#             */
-/*   Updated: 2025/07/22 16:27:10 by allan            ###   ########.fr       */
+/*   Updated: 2025/07/22 18:03:46 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,8 @@
 #include <map>
 #include <sstream>
 #include "../Request/Request.hpp"
+#include "../Cgi/CgiExecutor.hpp"
+#include "ResponseUtils.hpp"
 
 #define MULTIPART 2
 #define SINGLEPART 3
@@ -35,9 +37,9 @@ struct Response {
 
 template <typename T>
 std::string toString(T value) {
-    std::ostringstream oss;
-    oss << value;
-    return oss.str();
+	std::ostringstream oss;
+	oss << value;
+	return oss.str();
 }
 
 struct File {
@@ -57,7 +59,7 @@ struct File {
 	std::string generateUniqueFilename();
 };
 
-Response buildResponse(const Request& request);
+Response buildResponse(const Request& request, const std::vector<ServerConfig>& servers);
 Response handleGet();
 Response handlePost(const Request& request);
 Response handleDelete();

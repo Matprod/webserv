@@ -11,9 +11,11 @@ SRCS = 	srcs/main.cpp \
 		srcs/Request/Request.cpp \
 		srcs/Request/RequestBody.cpp \
 		srcs/Response/Response.cpp \
+		srcs/Response/ResponseUtils.cpp \
 		srcs/Config/ServerConfig.cpp \
 		srcs/Config/LocationConfig.cpp \
 		srcs/Config/ConfigParser.cpp \
+		srcs/Cgi/CgiExecutor.cpp \
 		
 OBJS = $(SRCS:.cpp=.o)
 

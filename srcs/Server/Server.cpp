@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
+/*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:29:23 by allan             #+#    #+#             */
-/*   Updated: 2025/07/22 16:42:37 by allan            ###   ########.fr       */
+/*   Updated: 2025/07/22 17:28:13 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,7 +72,7 @@ int serverLoop(const std::vector<ServerConfig>& servers) {
 
 					if (parse_status == REQUEST_OK) {
 /* 						std::cout << "HEEERE " << req.headers["Content-Length"] << std::endl; */
-						Response res = buildResponse(req);
+						Response res = buildResponse(req, servers);
 						std::string rawResponse = res.responseToString();
 						send(fds[i].fd, rawResponse.c_str(), rawResponse.size(), 0);
 						//Handle bad response (close socket ?)

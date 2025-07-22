@@ -3,17 +3,30 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
+/*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:45:12 by allan             #+#    #+#             */
-/*   Updated: 2025/07/22 16:32:34 by allan            ###   ########.fr       */
+/*   Updated: 2025/07/22 18:03:02 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Response.hpp"
 
+Response buildResponse(const Request& request, const std::vector<ServerConfig>& servers) {
+	Response res;
+	res.version = "HTTP/1.1";
 
-Response buildResponse(const Request& request) {
+	ServerConfig* server = getMatchingServer(request, servers, res);
+	if (!server)
+		return res;
+	LocationConfig* loc = getMatchingLocation(request, *server, res);
+	if (!loc)
+		return res;
+	if (handleRedirect(*loc, res))
+		return res;
+	if (isCGIRequest(*loc, request.uri))
+		return executeCGI(request, *loc, *server);
+	
 	if (request.method == "GET") {
 		return handleGet();
 	} else if (request.method == "POST") {
@@ -22,13 +35,13 @@ Response buildResponse(const Request& request) {
 		return handleDelete();
 	} else {
 		Response res;
-        res.version = "HTTP/1.1";
-        res.statusCode = 405;
-        res.statusMessage = getStatusMessage(405);
-        res.headers["Content-Type"] = "text/plain";
-        res.body = "Method Not Allowed";
-        res.headers["Content-Length"] = toString<size_t>(res.body.size());
-        return res;
+		res.version = "HTTP/1.1";
+		res.statusCode = 405;
+		res.statusMessage = getStatusMessage(405);
+		res.headers["Content-Type"] = "text/plain";
+		res.body = "Method Not Allowed";
+		res.headers["Content-Length"] = toString<size_t>(res.body.size());
+		return res;
 	}
 }
 
