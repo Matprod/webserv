@@ -6,7 +6,7 @@
 /*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 13:58:27 by allan             #+#    #+#             */
-/*   Updated: 2025/07/16 15:16:35 by allan            ###   ########.fr       */
+/*   Updated: 2025/07/22 16:27:10 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,9 @@
 #include <sstream>
 #include "../Request/Request.hpp"
 
+#define MULTIPART 2
+#define SINGLEPART 3
+
 struct Response {
 	std::string version;
 	int statusCode;
@@ -27,6 +30,7 @@ struct Response {
 	std::string body;	
 
 	std::string responseToString() const;
+	void createResponse(unsigned int code, const std::string& reason);
 };
 
 template <typename T>
@@ -35,6 +39,23 @@ std::string toString(T value) {
     oss << value;
     return oss.str();
 }
+
+struct File {
+	std::string fileName;
+	std::string filePath;
+	std::string fileData;
+	std::string boundary;
+	size_t length;
+
+	Response response;	
+	
+	int getFileName(const std::string& uri);
+	int getFileData(const Request& request);
+	bool isValidContentLength(const std::string& contentLength);
+	int createFile(const std::string& body);
+	bool fileExists(const std::string fullPath) const;
+	std::string generateUniqueFilename();
+};
 
 Response buildResponse(const Request& request);
 Response handleGet();

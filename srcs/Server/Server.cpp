@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
+/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:29:23 by allan             #+#    #+#             */
-/*   Updated: 2025/07/17 19:03:50 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/07/22 16:42:37 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,9 +71,11 @@ int serverLoop(const std::vector<ServerConfig>& servers) {
 					int parse_status = handle_client_request(fds[i].fd, fds, i, isServerFd, clientBuffers, lastActivity, req);
 
 					if (parse_status == REQUEST_OK) {
+/* 						std::cout << "HEEERE " << req.headers["Content-Length"] << std::endl; */
 						Response res = buildResponse(req);
 						std::string rawResponse = res.responseToString();
 						send(fds[i].fd, rawResponse.c_str(), rawResponse.size(), 0);
+						//Handle bad response (close socket ?)
 					}
 					else if (parse_status == REQUEST_INCOMPLETE) {
 						// WAITING
