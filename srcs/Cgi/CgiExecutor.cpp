@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   CgiExecutor.cpp                                    :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/07/18 15:59:09 by Matprod           #+#    #+#             */
-/*   Updated: 2025/07/18 19:30:00 by Matprod          ###   fr       */
+/*   CgiExecutor.cpp                                    %+:%+    %+:%+    %+:%+ */
+/*                                                    %+:%+ %+:%+ %+:%+       */
+/*   By: Matprod <matprod42@gmail.com>              %+:%+ %+:%+ %+:%+        */
+/*                                                %+:+%+:%+           */
+/*   Created: 2025/07/18 15:59:09 by Matprod           %#+    %#+             */
+/*   Updated: 2025/07/30 16:45:00 by Matprod          ###   fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,16 +21,35 @@ std::string getFileExtension(const std::string& uri) {
 
 std::string getScriptName(const std::string& uri) {
 	size_t last_slash = uri.find_last_of('/');
+	size_t query_pos = uri.find('?');
 	if (last_slash == std::string::npos)
-		return uri;
-	return uri.substr(last_slash);
+		return (query_pos != std::string::npos) ? uri.substr(0, query_pos) : uri;
+	size_t end_pos = (query_pos != std::string::npos) ? query_pos : uri.length();
+	return uri.substr(last_slash + 1, end_pos - last_slash - 1);
 }
 
-std::string getPathInfo(const std::string& uri, const std::string& script_name) {
-	size_t script_pos = uri.find(script_name);
-	if (script_pos == std::string::npos)
+std::string getPathInfo(const std::string& uri, const std::string& loc_path, const std::string& script_name) {
+	std::string clean_loc_path = loc_path;
+	if (!clean_loc_path.empty() && clean_loc_path[clean_loc_path.length() - 1] == '/') {
+		clean_loc_path.erase(clean_loc_path.length() - 1);
+	}
+	if (uri.find(clean_loc_path) != 0)
 		return "";
-	return uri.substr(script_pos + script_name.length());
+	std::string relative_path = uri.substr(clean_loc_path.length());
+	if (!relative_path.empty() && relative_path[0] == '/')
+		relative_path.erase(0, 1);
+	size_t script_pos = relative_path.find(script_name);
+	if (script_pos != 0)
+		return "";
+	std::string after_script = relative_path.substr(script_pos + script_name.length());
+	return after_script; // Return empty string if no extra path, no forced "/"
+}
+
+std::string getQueryString(const std::string& uri) {
+	size_t query_pos = uri.find('?');
+	if (query_pos != std::string::npos)
+		return uri.substr(query_pos + 1);
+	return "";
 }
 
 ServerConfig* findMatchingServer(const Request& req, const std::vector<ServerConfig>& servers) {
@@ -59,6 +78,8 @@ LocationConfig* findMatchingLocation(const std::string& uri, const std::vector<L
 Response executeCGI(const Request& req, const LocationConfig& loc, const ServerConfig& server) {
 	Response res;
 	res.version = "HTTP/1.1";
+
+	
 	std::string extension = getFileExtension(req.uri);
 	if (loc.cgi_extensions.find(extension) == loc.cgi_extensions.end()) {
 		res.statusCode = 404;
@@ -71,9 +92,10 @@ Response executeCGI(const Request& req, const LocationConfig& loc, const ServerC
 
 	std::string cgiProgram = loc.cgi_extensions.at(extension);
 	std::string scriptName = getScriptName(req.uri);
-	std::string scriptPath = loc.root + scriptName;
-	std::string pathInfo = getPathInfo(req.uri, scriptName);
-
+	std::string scriptPath = loc.root + "/" + scriptName; // Ensure proper path separator
+	std::string pathInfo = getPathInfo(req.uri, loc.path, scriptName);
+	std::string queryString = getQueryString(req.uri);
+	std::cout << "Debug: uri=" << req.uri << ", loc_path=" << loc.path << ", scriptName=" << scriptName << ", pathInfo=" << pathInfo << std::endl;
 	if (access(scriptPath.c_str(), F_OK) != 0) {
 		res.statusCode = 404;
 		res.statusMessage = getStatusMessage(404);
@@ -118,7 +140,7 @@ Response executeCGI(const Request& req, const LocationConfig& loc, const ServerC
 		// Configurer l'environnement CGI
 		std::vector<std::string> env;
 		env.push_back("REQUEST_METHOD=" + req.method);
-		env.push_back("QUERY_STRING=" + (req.uri.find('?') != std::string::npos ? req.uri.substr(req.uri.find('?') + 1) : ""));
+		env.push_back("QUERY_STRING=" + queryString);
 		env.push_back("CONTENT_LENGTH=" + (req.headers.count("content-length") ? req.headers.at("content-length") : "0"));
 		env.push_back("CONTENT_TYPE=" + (req.headers.count("content-type") ? req.headers.at("content-type") : ""));
 		env.push_back("SCRIPT_NAME=" + scriptName);
@@ -160,7 +182,7 @@ Response executeCGI(const Request& req, const LocationConfig& loc, const ServerC
 		buffer[bytes_read] = '\0';
 		cgiOutput += buffer;
 	}
-	std::cout << "Raw CGI Output for " << scriptPath << ": " << cgiOutput << std::endl;
+	//std::cout << "Raw CGI Output for " << scriptPath << ": " << cgiOutput << std::endl;
 	close(pipe_out[0]);
 
 	int status;
@@ -187,12 +209,15 @@ Response executeCGI(const Request& req, const LocationConfig& loc, const ServerC
 					res.headers[key] = value;
 				}
 			}
-
+			if (res.headers.find("Content-Length") == res.headers.end())
+				res.headers["Content-Length"] = toString<size_t>(res.body.size());
 		} else {
+			// Pas d’en-têtes → corps brut
 			res.body = cgiOutput;
 			res.headers["Content-Type"] = "text/html";
+			res.headers["Content-Length"] = toString<size_t>(res.body.size());
+
 		}
-		res.headers["Content-Length"] = toString<size_t>(res.body.size());
 	} else {
 		res.statusCode = 500;
 		res.statusMessage = getStatusMessage(500);

@@ -1,6 +1,6 @@
 /* ************************************************************************** */
 /*                                                                            */
-/*                                                        :::      ::::::::   */
+/*                                                    :::      ::::::::       */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
@@ -51,15 +51,15 @@ bool printConfig(const Config& config) {
 			if (j >= 1)
 				std::cout << std::endl;
             const LocationConfig& loc = server.locations[j];
-            std::cout << "    Path: " << loc.path << std::endl;
-            std::cout << "    Allow Methods: ";
+            std::cout << "  Path: " << loc.path << std::endl;
+            std::cout << "  Allow Methods: ";
             for (std::set<std::string>::const_iterator it = loc.allow_methods.begin(); it != loc.allow_methods.end(); ++it) {
                 std::cout << *it << ", ";
             }
             std::cout << std::endl;
-            std::cout << "    Root: " << loc.root << std::endl;
-            std::cout << "    Autoindex: " << (loc.autoindex ? "on" : "off") << std::endl;
-            std::cout << "    Index: ";
+            std::cout << "  Root: " << loc.root << std::endl;
+            std::cout << "  Autoindex: " << (loc.autoindex ? "on" : "off") << std::endl;
+            std::cout << "  Index: ";
             for (size_t k = 0; k < loc.index.size(); ++k) {
                 std::cout << loc.index[k];
                 if (k < loc.index.size() - 1) std::cout << ", ";
@@ -67,15 +67,15 @@ bool printConfig(const Config& config) {
             if (loc.index.size() == 0)
                 std::cout << "none";
             std::cout << std::endl;
-            std::cout << "    Redirect Status: " << (loc.redirect_status) << std::endl; // À corriger avec stringstream (voir ci-dessous)
-            std::cout << "    Redirect URL: " << (loc.redirect_url.empty() ? "none" : loc.redirect_url) << std::endl;
-            std::cout << "    CGI Extensions: ";
+            std::cout << "  Redirect Status: " << (loc.redirect_status) << std::endl; // À corriger avec stringstream (voir ci-dessous)
+            std::cout << "  Redirect URL: " << (loc.redirect_url.empty() ? "none" : loc.redirect_url) << std::endl;
+            std::cout << "  CGI Extensions: ";
             for (std::map<std::string, std::string>::const_iterator it = loc.cgi_extensions.begin(); it != loc.cgi_extensions.end(); ++it) {
                 std::cout << it->first << " -> " << it->second << ", ";
             }
             std::cout << std::endl;
-            std::cout << "    Upload Path: " << (loc.upload_path.empty() ? "none" : loc.upload_path) << std::endl;
-            std::cout << "    Alias: " << (loc.alias.empty() ? "none" : loc.alias) << std::endl; // Nouvel affichage pour alias
+            std::cout << "  Upload Path: " << (loc.upload_path.empty() ? "none" : loc.upload_path) << std::endl;
+            std::cout << "  Alias: " << (loc.alias.empty() ? "none" : loc.alias) << std::endl; // Nouvel affichage pour alias
         }
         std::cout << std::endl;
     }

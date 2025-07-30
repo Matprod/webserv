@@ -6,7 +6,7 @@
 /*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:44:20 by allan             #+#    #+#             */
-/*   Updated: 2025/07/18 10:43:16 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/07/30 17:00:19 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -110,4 +110,20 @@ int parse_request(int socket, Request& req, std::map<int, std::string>& buffers,
 	} else {
 		return parse_body_normal(request, body_start, content_length, req, buffers, socket);
 	}
+}
+
+void printRequest(const Request& req) {
+	std::cout << "Request Details:" << std::endl;
+	std::cout << "  Method: " << (req.method.empty() ? "N/A" : req.method.c_str()) << std::endl;
+	std::cout << "  URI: " << (req.uri.empty() ? "N/A" : req.uri.c_str()) << std::endl;
+	std::cout << "  Version: " << (req.version.empty() ? "N/A" : req.version.c_str()) << std::endl;
+	std::cout << "  Headers:" << std::endl;
+	if (req.headers.empty()) {
+		std::cout << "	(None)" << std::endl;
+	} else {
+		for (std::map<std::string, std::string>::const_iterator it = req.headers.begin(); it != req.headers.end(); ++it) {
+			std::cout << "	" << it->first << ": " << it->second.c_str() << std::endl;
+		}
+	}
+	std::cout << "  Body: " << (req.body.empty() ? "N/A" : req.body.c_str()) << std::endl;
 }
