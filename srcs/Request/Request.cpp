@@ -6,7 +6,7 @@
 /*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:44:20 by allan             #+#    #+#             */
-/*   Updated: 2025/07/30 17:00:19 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/08/05 11:30:23 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,6 @@ int read_socket(int socket, std::map<int, std::string>& buffers, std::map<int, t
 		return (bytes_read < 0) ? REQUEST_ERROR : REQUEST_INCOMPLETE;
 	}
 	lastActivity[socket] = time(NULL);
-	buffer[bytes_read] = '\0';
 	buffers[socket].append(buffer, bytes_read);
 	return bytes_read;
 }

@@ -75,6 +75,23 @@ LocationConfig* findMatchingLocation(const std::string& uri, const std::vector<L
 	return best_match;
 }
 
+std::string readCgiOutput(int fd) {
+	std::string output;
+	char buffer[4096];
+	ssize_t bytesRead;
+
+	while ((bytesRead = read(fd, buffer, sizeof(buffer))) > 0) {
+		output.append(buffer, bytesRead);
+	}
+
+	if (bytesRead < 0) {
+		perror("read from CGI failed");
+		return "";
+	}
+
+	return output;
+}
+
 Response executeCGI(const Request& req, const LocationConfig& loc, const ServerConfig& server) {
 	Response res;
 	res.version = "HTTP/1.1";
@@ -141,7 +158,7 @@ Response executeCGI(const Request& req, const LocationConfig& loc, const ServerC
 		std::vector<std::string> env;
 		env.push_back("REQUEST_METHOD=" + req.method);
 		env.push_back("QUERY_STRING=" + queryString);
-		env.push_back("CONTENT_LENGTH=" + (req.headers.count("content-length") ? req.headers.at("content-length") : "0"));
+		env.push_back("CONTENT_LENGTH=" + toString<size_t>(req.body.size()));
 		env.push_back("CONTENT_TYPE=" + (req.headers.count("content-type") ? req.headers.at("content-type") : ""));
 		env.push_back("SCRIPT_NAME=" + scriptName);
 		env.push_back("SCRIPT_FILENAME=" + scriptPath);
@@ -175,16 +192,10 @@ Response executeCGI(const Request& req, const LocationConfig& loc, const ServerC
 	}
 	close(pipe_in[1]);
 
-	char buffer[4096];
-	std::string cgiOutput;
-	ssize_t bytes_read;
-	while ((bytes_read = read(pipe_out[0], buffer, sizeof(buffer) - 1)) > 0) {
-		buffer[bytes_read] = '\0';
-		cgiOutput += buffer;
-	}
-	//std::cout << "Raw CGI Output for " << scriptPath << ": " << cgiOutput << std::endl;
+	std::string cgiOutput = readCgiOutput(pipe_out[0]);
 	close(pipe_out[0]);
 
+	std::cout << "Raw CGI Output for " << scriptPath << ": " << cgiOutput << std::endl;
 	int status;
 	waitpid(pid, &status, 0);
 
