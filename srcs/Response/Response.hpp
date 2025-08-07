@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
+/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 13:58:27 by allan             #+#    #+#             */
-/*   Updated: 2025/07/22 18:03:46 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/07/25 14:28:49 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,7 @@ struct Response {
 	std::string statusMessage;
 	std::map<std::string, std::string> headers;
 	std::string body;	
+	bool closingConnection;
 
 	std::string responseToString() const;
 	void createResponse(unsigned int code, const std::string& reason);
@@ -57,12 +58,15 @@ struct File {
 	int createFile(const std::string& body);
 	bool fileExists(const std::string fullPath) const;
 	std::string generateUniqueFilename();
+	void createDeleteResponse();
 };
 
 Response buildResponse(const Request& request, const std::vector<ServerConfig>& servers);
-Response handleGet();
+Response handleGet(const Request& request);
 Response handlePost(const Request& request);
-Response handleDelete();
+Response handleDelete(const Request& request);
 std::string getStatusMessage(int statusCode);
+int checkRequestVersion(const std::string& version, Response& response);
+bool shouldConnectionBeClosed(const std::map<std::string, std::string>& headers);
 
 #endif

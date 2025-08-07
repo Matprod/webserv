@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
+/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:45:12 by allan             #+#    #+#             */
-/*   Updated: 2025/07/22 18:03:02 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/07/26 17:14:33 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,11 +28,11 @@ Response buildResponse(const Request& request, const std::vector<ServerConfig>& 
 		return executeCGI(request, *loc, *server);
 	
 	if (request.method == "GET") {
-		return handleGet();
+		return handleGet(request);
 	} else if (request.method == "POST") {
 		return handlePost(request);
 	} else if (request.method == "DELETE") {
-		return handleDelete();
+		return handleDelete(request);
 	} else {
 		Response res;
 		res.version = "HTTP/1.1";
@@ -45,16 +45,15 @@ Response buildResponse(const Request& request, const std::vector<ServerConfig>& 
 	}
 }
 
-Response handleGet() {
-	Response res;
+Response handleGet(const Request& request) {
+	Response response;
+	
+	response.closingConnection = shouldConnectionBeClosed(request.headers);
 
-	res.version = "HTTP/1.1";
-	res.body = "<html><body><h1>Hello, GET!<h1><body><html>";
-	res.statusCode = 200;
-	res.statusMessage = getStatusMessage(200);
-	res.headers["Content-Type"] = "text/html";
-	res.headers["Content-Length"] = toString<size_t>(res.body.size());
-	return res;
+	if (checkRequestVersion(request.version, response) == ERROR)
+		return response;
+	response.createResponse(200, "");	
+	return response;
 }
 
 
@@ -67,15 +66,26 @@ Response handlePost(const Request& request) {
 	std::cout << "Post Response" << std::endl;
 	File file;
 	
+
+	file.response.closingConnection = shouldConnectionBeClosed(request.headers);
+	std::cout << "1" << std::endl;
+	if (checkRequestVersion(request.version, file.response) == ERROR)
+		return file.response;
+	
+	std::cout << "2" << std::endl;
 	if (file.getFileName(request.uri) == ERROR)
 		return file.response;
 
+	std::cout << "3" << std::endl;
 	if (file.getFileData(request) == ERROR)
 		return file.response;
 
+	std::cout << "4" << std::endl;
 	if (file.createFile(request.body) == ERROR)
 		return file.response;
 		
+	std::cout << "5" << std::endl;
+	file.response.createResponse(200, "File Created");
 	return file.response;
 }
 		
@@ -110,17 +120,17 @@ int File::getFileName(const std::string& uri) {
 int File::getFileData(const Request& request) {
 	//STEP 1: Check Header Content Type (Empty or application/octet-stream)
 	const std::map<std::string, std::string> headers = request.headers;
-	std::map<std::string,std::string>::const_iterator it = headers.find("Content-Type"); 
+	std::map<std::string,std::string>::const_iterator it = headers.find("content-type"); 
 	if (it != headers.end()) {
 		std::string contentType = it->second;
-		if (contentType.size() != 26 || contentType.compare(0, 26, "application/octet-stream;") != 0) {
+		if (contentType.size() != 24 || contentType.compare(0, 26, "application/octet-stream") != 0) {
 			response.createResponse(415, "Only Content-Type allowed: 'application/octet-stream'");
 			return ERROR;
 		}
 	}
 	
 	//STEP 2: Check that Header Content-Length is present and Valid
-	std::map<std::string,std::string>::const_iterator itLength = headers.find("Content-Length:"); 
+	std::map<std::string,std::string>::const_iterator itLength = headers.find("content-length"); 
 	if (itLength == headers.end()) {
 		response.createResponse(411, "");
 		return ERROR; //Need to have a Content-Lenght 
@@ -201,75 +211,69 @@ std::string File::generateUniqueFilename() {
     return fullPath;
 }
 
-
-/* int File::getBoundary(const std::string& contentType) {
-	std::size_t pos = contentType.find('=');
-    if (pos != std::string::npos && pos + 1 < contentType.size()) {
-        boundary = contentType.substr(pos + 1); // everything after '='
-		return SUCCESS;
-    } 
-	return ERROR;
-}
-
-bool File::isValidBoundary() const {
-	if (boundary.size() < 1 || boundary.size() > 70)
-		return false;
-	else if (boundary.compare(0, 2, "--") == 0)
-		return false;
-	for (int i = 0; i < boundary.size(); ++i) {
-		if (isValidBoundaryChar(boundary[i]) == false)
-			return false;
-	}	
-	return true;
-}
-
-bool File::isValidBoundaryChar(char c) const {
-	if (isalpha(c) || isdigit(c) || c == '\'' || c == '(' || c == ')' || c == '+' || c == '_' || c == ',')
-		return true;
-	else if (c == '-' || c == '.' || c == '/' || c == ':' || c == '=' || c == '?')
-		return true;
-	return false;
-} */
-
-/* int File::getFileName(const std::map<std::string,std::string>& headers) {
-	std::map<std::string,std::string>::const_iterator it = headers.find("Content-Disposition"); 
-	if (it == headers.end())
-		return ERROR;
-	
-	const std::string value = it->second;	
-	size_t pos = it->second.find("filename=");
-	if (pos == std::string::npos)
-		return ERROR;
-	
-	pos += 9;
-	
-	if (pos < value.size() && value[pos] == '"') {
-		++pos;
-		size_t end = value.find('"', pos);
-		if (end == std::string::npos)
-			return ERROR;
-		fileName = value.substr(pos, end - pos);
-	} else {
-		size_t end = value.find(';', pos);
-		if (end == std::string::npos)
-			return ERROR;
-		fileName = value.substr(pos, end - pos);
-	}
-	return SUCCESS;	
-} */
-
-
 //////////////////////////////////////////////////////////
 //					DELETE METHOD						//
 //////////////////////////////////////////////////////////
 
-Response handleDelete() {
-	Response res;
+Response handleDelete(const Request& request) {
+	std::cout << "Post Response" << std::endl;
+	File file;
+	
+	file.response.closingConnection = shouldConnectionBeClosed(request.headers);
+	
+	if (checkRequestVersion(request.version, file.response) == ERROR)
+		return file.response;
+		
+	if (file.getFileName(request.uri) == ERROR)
+		return file.response;
+	file.filePath = request.uri;
+	
+	if (unlink(file.filePath.c_str()) != 0) {
+		file.createDeleteResponse();
+		return file.response;
+	}
+	file.response.createResponse(200, "File has been Deleted");
+	return file.response;
+}
 
-	res.version = "HTTP/1.1";
-	res.statusCode = 204;
-	res.statusMessage = getStatusMessage(204);
-	return res;
+void File::createDeleteResponse() {
+    switch (errno) {
+        case ENOENT:  // No such file or directory
+            response.createResponse(404, "Ressource was not Found"); // Not Found
+            break;
+
+        case EACCES:  // Permission denied
+            response.createResponse(404, "Operation is not Allowed"); // Not Found
+            break;
+			
+        case ENOTDIR: // Component in path is not a directory
+            response.createResponse(404, "Path Invalid"); // Not Found
+            break;
+			
+        case EROFS:   // Read-only filesystem
+            response.createResponse(403, "Server cannot modify resource"); // Not Found
+            break;
+
+        case EPERM:   // Operation not permitted (e.g., deleting directory)
+            response.createResponse(403, ""); // Not Found
+            break;
+		
+        case EISDIR:  // Is a directory
+            response.createResponse(403, "Delete Not Allowed on Directory"); // Not Found
+            break;
+
+        case ENAMETOOLONG: // Path too long
+            response.createResponse(414, ""); // Not Found
+            break;
+
+        case EBUSY: // Resource busy (locked)
+            response.createResponse(423, "Ressource is currently locked or in use"); // Not Found
+            break;
+
+        default:
+            response.createResponse(500, "Unexpected failure"); // Not Found
+            break;
+	}
 }
 
 
@@ -277,6 +281,25 @@ Response handleDelete() {
 //					UTILS								//
 //////////////////////////////////////////////////////////
 
+bool shouldConnectionBeClosed(const std::map<std::string, std::string>& headers) {
+	std::map<std::string,std::string>::const_iterator it = headers.find("connection"); 
+	if (it != headers.end()) {
+		std::string contentType = it->second;
+		if (contentType.size() != 24 || contentType.compare(0, 5, "close") != 0)
+			return true;
+	}
+	return false;
+}
+
+int checkRequestVersion(const std::string& version, Response& response) {
+	const std::string allowedVersion = "HTTP/1.1";
+	if (version.compare(0, version.size(), allowedVersion) != 0) {
+		response.createResponse(505, "");
+		return ERROR;
+	}
+	return SUCCESS;
+}
+		
 std::string Response::responseToString() const {
 	std::ostringstream oss;
 
@@ -298,7 +321,20 @@ void Response::createResponse(unsigned int code, const std::string& reason) {
 		body = reason;
 		headers["Content-Type"] = "text/plain";
 	}
-	headers["Connection"] = "close";
+	if (closingConnection == 1)
+		headers["Connection"] = "close";
+	else {
+		switch(statusCode) {
+			case 400:
+			case 411:
+			case 413:
+			case 414:
+			case 415:
+			case 505:
+				headers["Connection"] = "close";
+				closingConnection == true;
+		}
+	}
 }
 
 std::string getStatusMessage(int statusCode) {
@@ -312,12 +348,14 @@ std::string getStatusMessage(int statusCode) {
 		case 405: return "Method not Allowed";
 		case 411: return "Length Required";
 		case 413: return "Payload Too Large";
+		case 414: return "URI Too Long";
 		case 415: return "Unsuported Media Type";
+		case 423: return "Locked";
 		case 500: return "Internal Server Error";
+		case 505: return "Version not supported";
 	}
 	return "Unknown";
 }
-
 
 /* 
 	HTTP status codes are grouped into 5 classes:
