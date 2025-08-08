@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
+/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:29:23 by allan             #+#    #+#             */
-/*   Updated: 2025/07/23 22:10:29 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/08/08 17:53:50 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,14 +69,15 @@ int serverLoop(const std::vector<ServerConfig>& servers) {
 				else {
 					Request req;
 					int parse_status = handle_client_request(fds[i].fd, fds, i, isServerFd, clientBuffers, lastActivity, req);
-
+					std::cout << "REQUEST AFTER PARSER:\n" << req << std::endl;
 					if (parse_status == REQUEST_OK) {
-/* 						std::cout << "HEEERE " << req.headers["Content-Length"] << std::endl; */
-    					printRequest(req);
 						Response res = buildResponse(req, servers);
 						std::string rawResponse = res.responseToString();
+						std::cout << "RESPONSE:\n" << rawResponse << std::endl;
 						send(fds[i].fd, rawResponse.c_str(), rawResponse.size(), 0);
-						//Handle bad response (close socket ?)
+						sleep(5);
+						if (res.closingConnection == true)
+							close_client(fds[i].fd, fds, isServerFd, clientBuffers, lastActivity);
 					}
 					else if (parse_status == REQUEST_INCOMPLETE) {
 						// WAITING

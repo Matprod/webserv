@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
+/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:44:20 by allan             #+#    #+#             */
-/*   Updated: 2025/08/05 11:30:23 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/08/08 17:54:59 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -125,4 +125,17 @@ void printRequest(const Request& req) {
 		}
 	}
 	std::cout << "  Body: " << (req.body.empty() ? "N/A" : req.body.c_str()) << std::endl;
+}
+
+std::ostream &operator<<(std::ostream &o, const Request &i) {
+	o << "Method: " << i.method << std::endl;
+	o << "Uri: " << i.uri << std::endl;
+	o << "Version: " << i.version << std::endl;
+	o << "Headers:\n";
+	for (std::map<std::string, std::string>::const_iterator it = i.headers.begin(); it != i.headers.end(); ++it) {
+		o << it->first << ":" << it->second << std::endl;
+	}
+	o << std::endl;
+	o << "Body:\n" << i.body << std::endl;
+	return o;	
 }
