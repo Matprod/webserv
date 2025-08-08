@@ -6,7 +6,7 @@
 /*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/18 10:43:19 by Matprod           #+#    #+#             */
-/*   Updated: 2025/08/05 18:25:50 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/08/05 19:07:13 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,7 @@ int parse_body_chunked(const std::string& request, size_t body_start, Request& r
 	std::string&	buffer = buffers[socket];
 	std::string&	body = req.body;
 	size_t			pos = body_start;
-	long			data_size = -1;
+	//			data_size = -1;
 	long			all_chunk_size = 0;
 	size_t			all_chunk_size_end = 0;
 	size_t			string_size = 0;
@@ -47,16 +47,16 @@ int parse_body_chunked(const std::string& request, size_t body_start, Request& r
 	long			size_chunk_digit = 0;
 	long			real_size_chunk;
 	size_t			start_end_chunk;
-	size_t			real_end_chunk = 0;
+	//size_t			real_end_chunk = 0;
 	size_t			start_string = 0;
 	size_t			end_string = 0;
-	int i;
-	//std::string		string;
 	char *endptr;
 	std::cout << std::endl << "______________________________________________________________" << std::endl;
 	//setup all chunk and start chunk;
 	std::cout << "pos :" << pos << std::endl;
 	all_chunk_size_end = request.find("\n", pos);
+	if (all_chunk_size_end == std::string::npos)
+		return REQUEST_INCOMPLETE;
 	std::cout << "chunk_size_end :" << all_chunk_size_end << std::endl;
 	all_chunk_size = strtol(request.substr(pos, all_chunk_size_end - pos).c_str(), &endptr, 16);
 	std::cout << "all chunk size (at first in hexa but nox in decimal) : " << all_chunk_size << std::endl;
@@ -65,39 +65,48 @@ int parse_body_chunked(const std::string& request, size_t body_start, Request& r
 	start_chunk = all_chunk_size_end + 1;
 	while (true) {
 		
-		if (data_size == 0) {
-			buffer.erase(0, real_end_chunk);
-			return REQUEST_OK;
-		}
 
 		// setup chunk size 
 		std::cout << "start_chunk pos : " << start_chunk << " | start_chunk value : "<< request.substr(start_chunk, 1) << std::endl;
 		start_end_chunk = request.find("\n", start_chunk);
+		if (start_end_chunk == std::string::npos)
+			return REQUEST_INCOMPLETE;
 		std::cout << "start end chunk pos = " << start_end_chunk << " | start end chunk value : "<< request.substr(start_end_chunk, 1) << std::endl;
 		size_chunk_digit = start_end_chunk - start_chunk;
 		std::cout << "size chunk = " << size_chunk_digit << std::endl;
 		real_size_chunk = strtol(request.substr(start_chunk, size_chunk_digit).c_str(), &endptr, 16);
+		if (real_size_chunk == 0) {
+			// Verify trailing CRLF
+			size_t final_crlf = request.find("\r\n", start_end_chunk);
+			if (final_crlf == std::string::npos) {
+				return REQUEST_INCOMPLETE;
+			}
+			
+			// Remove processed data from buffer
+			buffer.erase(0, final_crlf + 2);
+			return REQUEST_OK;
+		}
+		
 		if (real_size_chunk < 0 || *endptr != '\0')
 			return REQUEST_ERROR;
-
-
+			
 		// setup string for body
-		start_string = start_end_chunk + 1; // ptet + 1 
+		start_string = start_end_chunk + 1; // ptet + 1
+		std::cout << "start string = " << start_string << std::endl;
 		end_string =  request.find("\n", start_string);
-		string_size = end_string - start_string;
+		if (end_string == std::string::npos)
+			return REQUEST_INCOMPLETE;
 
-		std::cout << "body append = " << request.substr(start_string, string_size) << std::endl;
+		string_size = end_string - start_string;
+		std::cout << "body appened = " << request.substr(start_string, string_size) << std::endl;
 		body.append(request.substr(start_string, string_size));
+		
 		std::cout << "BODY = " << req.body;
 		if (body.length() > MAX_BODY_SIZE)
 			return REQUEST_ERROR;
 		// setup new position
 		start_chunk = end_string + 1;
 		std::cout << std::endl << "______________________________________________________________" << std::endl;
-		all_chunk_size++;
-		if ( i == 3)
-			break;
-		i++;
 	}
 	std::cout << "Request chunk incomplete 2" << std::endl;
 	return REQUEST_INCOMPLETE;
