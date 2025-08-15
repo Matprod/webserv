@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
+/*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:44:20 by allan             #+#    #+#             */
-/*   Updated: 2025/08/08 17:54:59 by allan            ###   ########.fr       */
+/*   Updated: 2025/08/15 01:38:25 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,15 +34,28 @@ int read_socket(int socket, std::map<int, std::string>& buffers, std::map<int, t
 // Parsing request
 int parse_request_line(const std::string& request_line, Request& req) {
 	size_t method_end = request_line.find(' ');
-	if (method_end == std::string::npos) return REQUEST_ERROR;
+	if (method_end == std::string::npos)
+	{
+		std::cout << "uri_end error" << std::endl;
+		return REQUEST_ERROR;
+	}
 	req.method = request_line.substr(0, method_end);
+	std::cout << "REQUEST LINE DEBUG: [" << request_line << "]" << std::endl;
 
 	size_t uri_end = request_line.find(' ', method_end + 1);
-	if (uri_end == std::string::npos) return REQUEST_ERROR;
+	if (uri_end == std::string::npos)
+	{
+		std::cout << "uri_end error" << std::endl;
+		return REQUEST_ERROR;
+	}
+		
 	req.uri = request_line.substr(method_end + 1, uri_end - method_end - 1);
 
 	req.version = request_line.substr(uri_end + 1);
-	req.version.erase(req.version.find_last_not_of(" \t\r\n") + 1);
+	/* size_t end_pos = req.version.find_last_not_of(" \t\r\n");
+    if (end_pos != std::string::npos)
+        req.version.erase(end_pos + 1); */
+
 	return REQUEST_OK;
 }
 
@@ -84,11 +97,19 @@ int parse_request(int socket, Request& req, std::map<int, std::string>& buffers,
 	std::istringstream iss(request.substr(0, header_end));
 	std::string request_line;
 	if (!std::getline(iss, request_line))
+	{
 		return REQUEST_ERROR;	
+	}
+	if (!request_line.empty() && request_line[request_line.size() - 1] == '\r')
+    	request_line.erase(request_line.size() - 1);
 	if (parse_request_line(request_line, req) != REQUEST_OK)
+	{
 		return REQUEST_ERROR;
+	}
 	if (parse_headers(iss, req) != REQUEST_OK)
+	{
 		return REQUEST_ERROR;
+	}
 	
 	// Check if it's chunked and size of content length
 	bool is_chunked = req.headers.count("transfer-encoding") && to_lower(req.headers["transfer-encoding"]) == "chunked";

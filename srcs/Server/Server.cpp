@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
+/*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:29:23 by allan             #+#    #+#             */
-/*   Updated: 2025/08/08 17:53:50 by allan            ###   ########.fr       */
+/*   Updated: 2025/08/11 13:21:59 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,7 +69,7 @@ int serverLoop(const std::vector<ServerConfig>& servers) {
 				else {
 					Request req;
 					int parse_status = handle_client_request(fds[i].fd, fds, i, isServerFd, clientBuffers, lastActivity, req);
-					std::cout << "REQUEST AFTER PARSER:\n" << req << std::endl;
+					//std::cout << "REQUEST AFTER PARSER:\n" << req << std::endl;
 					if (parse_status == REQUEST_OK) {
 						Response res = buildResponse(req, servers);
 						std::string rawResponse = res.responseToString();

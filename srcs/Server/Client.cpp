@@ -6,7 +6,7 @@
 /*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:42:06 by allan             #+#    #+#             */
-/*   Updated: 2025/07/23 22:10:39 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/08/11 00:11:45 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,7 +50,7 @@ int handle_client_request(int fd, std::vector<pollfd>& fds, int& i,
 	int result = parse_request(fd, req, clientBuffers, lastActivity);
 
 	if (result == REQUEST_ERROR) {
-		std::cerr << "Error of parsing for thr request\n";
+		std::cerr << "Error of parsing for the request\n";
 		close_client(fd, fds, isServerFd, clientBuffers, lastActivity);
 		--i;
 		return REQUEST_ERROR;
