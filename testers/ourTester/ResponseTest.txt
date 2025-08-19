@@ -1,0 +1,70 @@
+1 - Quick functional smoke (golden path) OK
+# start clean
+rm -f upload/*.txt 2>/dev/null || true
+
+# create files via POST OK
+curl -sS -X POST http://localhost:3434/upload/a.txt -H "Content-Type: application/octet-stream" --data-binary "AAAA"
+curl -sS -X POST http://localhost:3434/upload/b.txt -H "Content-Type: application/json"            -d '{"x":1}'
+curl -sS -X POST http://localhost:3434/upload/c.txt -H "Content-Type: text/plain"                   -d "hello"
+
+# verify GET OK
+diff -u <(curl -sS http://localhost:3434/upload/a.txt) <(printf "AAAA")
+diff -u <(curl -sS http://localhost:3434/upload/b.txt) <(printf '{"x":1}')
+diff -u <(curl -sS http://localhost:3434/upload/c.txt) <(printf "hello")
+
+# delete + confirm 404 OK
+curl -sS -o /dev/null -w "%{http_code}\n" -X DELETE http://localhost:3434/upload/a.txt    # expect 204
+curl -sS -o /dev/null -w "%{http_code}\n"              http://localhost:3434/upload/a.txt  # expect 404
+
+-------------------------------------------------------
+
+
+2 - Edge cases & protocol errors
+
+# 2.1 Missing Content-Length on POST (should be 411) OK
+printf "POST /upload/x.txt HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/octet-stream\r\n\r\nDATA" \
+ | nc -q 1 127.0.0.1 3434
+
+# 2.2 Invalid Content-Length (should be 400) --> REJECTED AT REQUEST PARSING 
+printf "POST /upload/y.txt HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/octet-stream\r\nContent-Length: abc\r\n\r\n" \
+ | nc -q 1 127.0.0.1 3434
+
+# 2.3 Mismatch length vs body (should be 400) --> SOMETHING IS HAPPENING IN THE REQUEST PARSER
+printf "POST /upload/z.txt HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/octet-stream\r\nContent-Length: 10\r\n\r\nshort" \
+ | nc -q 1 127.0.0.1 3434
+
+# 2.4 Unsupported media type (should be 415) OK
+curl -v -X POST http://localhost:3434/upload/u.txt -H "Content-Type: image/png" --data-binary "x"
+
+# 2.5 Invalid URI (should be 400) OK
+curl -sS -o /dev/null -w "%{http_code}\n" "http://localhost:3434/upload/$(python - <<'PY'\nprint('a'*5000)\nPY)"
+
+# 2.6 GET no such file (expect 404) OK
+curl -sS -o /dev/null -w "%{http_code}\n" http://localhost:3434/upload/does-not-exist.txt
+
+---------------------------------------------------------
+
+3 - Concurrency & race conditions
+3.1 Parallel uploads (same filename, triggers your unique-name logic) PERFECT
+seq 1 50 | xargs -I{} -P 20 curl -sS -X POST http://localhost:3434/upload/race.txt \
+  -H "Content-Type: application/octet-stream" --data-binary "payload-{}"
+
+3.2 Parallel GET flood (against an existing file) OK
+# create a small file to fetch
+curl -sS -X POST http://localhost:3434/upload/big.txt \
+     -H "Content-Type: application/octet-stream" \
+     --data-binary "ok"
+# hammer it with concurrent GETs (200 requests, 50 in parallel)
+seq 1 200 | xargs -n1 -P 50 -I{} curl -sS http://localhost:3434/upload/big.txt >/dev/null
+
+3.3 Parallel Delete Flood (First one should Delete 204 and the rest should return 404) OK
+# 1 - Create the file first
+curl -sS -X POST http://localhost:3434/upload/to-delete.txt \
+     -H "Content-Type: application/octet-stream" \
+     --data-binary "bye"
+
+# 2 - Fire off 200 DELETE requests with 50 in parallel OK
+seq 1 200 | xargs -n1 -P 50 curl -sS -X DELETE http://localhost:3434/upload/to-delete.txt >/dev/null
+
+
+--------------------------------------------------------

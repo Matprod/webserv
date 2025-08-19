@@ -6,7 +6,7 @@
 /*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 13:58:27 by allan             #+#    #+#             */
-/*   Updated: 2025/07/25 14:28:49 by allan            ###   ########.fr       */
+/*   Updated: 2025/08/19 11:56:25 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,7 +58,8 @@ struct File {
 	int createFile(const std::string& body);
 	bool fileExists(const std::string fullPath) const;
 	std::string generateUniqueFilename();
-	void createDeleteResponse();
+	void createDeleteResponse(const int err);
+	int checkContentType(const std::string &contentType) const;
 };
 
 Response buildResponse(const Request& request, const std::vector<ServerConfig>& servers);
