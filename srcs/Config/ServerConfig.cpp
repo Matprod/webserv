@@ -6,7 +6,7 @@
 /*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 20:07:43 by Matprod           #+#    #+#             */
-/*   Updated: 2025/07/13 21:37:04 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/08/19 00:54:05 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -113,3 +113,4 @@ bool Config::parseServerDirective(const std::string& directive, const std::vecto
 	}
 	return 0;
 }
+

@@ -6,7 +6,7 @@
 /*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/18 10:43:19 by Matprod           #+#    #+#             */
-/*   Updated: 2025/08/15 20:11:31 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/08/19 01:52:48 by Matprod          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -190,10 +190,6 @@ int parse_body_chunked(const std::string& request, size_t body_start, Request& r
 		{
 			real_size_chunk  = all_chunk_size;
 		}
-		if (real_size_chunk < 0) {
-			std::cout << "Error: Invalid chunk size format" << std::endl;
-			return REQUEST_ERROR;
-		}
 		// Cas de fin (chunk size = 0)
 		if (real_size_chunk == 0) {
 			size_t final_crlf = request.find("\r\n", start_end_chunk + 2);
@@ -205,6 +201,14 @@ int parse_body_chunked(const std::string& request, size_t body_start, Request& r
 			buffer.clear();
 			std::cout << "Chunked transfer complete, body length: " << body.length() << std::endl;
 			return REQUEST_OK;
+		}
+		if (endptr == request.substr(start_chunk, size_chunk_digit).c_str()) {
+    		std::cout << "Error: No valid hex digits found in chunk size" << std::endl;
+   			return REQUEST_ERROR;
+		}
+		if (*endptr != '\0') {
+    		std::cout << "Error: Invalid characters after chunk size: '" << endptr << "'" << std::endl;
+    		return REQUEST_ERROR;
 		}
 		if (real_size_chunk < 0) {
 			std::cout << "Error: Invalid chunk size format" << std::endl;
@@ -220,8 +224,8 @@ int parse_body_chunked(const std::string& request, size_t body_start, Request& r
 			start_string = all_chunk_size_end + 1; // +1 or +2
 		}
 		if (start_string + real_size_chunk > request.length()) {
-			std::cout << "Error: Insufficient data for chunk | start_string = " << start_string << " real_size_chunk = " << real_size_chunk << " request_lenght = " << request.length() << std::endl;
-			return REQUEST_INCOMPLETE;
+			std::cout << "Error: Insufficient data for the request length" << std::endl;
+			return REQUEST_ERROR;
 		}
 		if (is_full_data_binary == 2)
 			end_string =  request.find("\r", start_string);
@@ -230,7 +234,19 @@ int parse_body_chunked(const std::string& request, size_t body_start, Request& r
 		if (end_string == std::string::npos)
 			return REQUEST_INCOMPLETE;
 
+
 		string_size = end_string - start_string;
+		std::cout << "string size = " << string_size<< "real size chunk = " << real_size_chunk << std::endl;
+		if (real_size_chunk > (long)string_size)
+		{
+			std::cout << "Error: CHUNK VALUE > size of the value" << std::endl;
+			return (REQUEST_ERROR);
+		}
+		if (real_size_chunk < (long)string_size)
+		{
+			std::cout << "Error: Insufficient data for chunk " << std::endl;
+			return (REQUEST_ERROR);
+		}
 		body.append(request.substr(start_string, string_size));
 		
 		if (body.length() > MAX_BODY_SIZE)
