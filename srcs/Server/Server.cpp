@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
+/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:29:23 by allan             #+#    #+#             */
-/*   Updated: 2025/08/11 13:21:59 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/09/08 13:54:32 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,7 +75,6 @@ int serverLoop(const std::vector<ServerConfig>& servers) {
 						std::string rawResponse = res.responseToString();
 						std::cout << "RESPONSE:\n" << rawResponse << std::endl;
 						send(fds[i].fd, rawResponse.c_str(), rawResponse.size(), 0);
-						sleep(5);
 						if (res.closingConnection == true)
 							close_client(fds[i].fd, fds, isServerFd, clientBuffers, lastActivity);
 					}
