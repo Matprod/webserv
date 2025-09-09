@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerConfig.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
+/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 20:09:14 by Matprod           #+#    #+#             */
-/*   Updated: 2025/08/19 00:51:11 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/09/09 14:02:14 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,8 +30,10 @@ public:
 	std::vector<std::string> index;
 	
 	int socketFd;
-	int ServerLoop(const std::vector<ServerConfig>& servers);
+	int ServerLoop(std::vector<ServerConfig>& servers);//Need to be implemented? 
 	
-	ServerConfig();
-	virtual ~ServerConfig();
+	ServerConfig();//Need to be implemented?
+	virtual ~ServerConfig();//Need to be implemented?
 };
+
+std::ostream &operator<<(std::ostream &o, const ServerConfig&i);

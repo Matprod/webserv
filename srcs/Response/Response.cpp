@@ -6,7 +6,7 @@
 /*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:45:12 by allan             #+#    #+#             */
-/*   Updated: 2025/09/08 13:53:19 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/09 14:26:05 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,9 @@ Response buildResponse(const Request& request, const std::vector<ServerConfig>& 
 	Response res;
 	res.version = "HTTP/1.1";
 
+	std::cout << "REQUEST CONFIG\n" << *request.config << std::endl;
+	
+	//Here I'm not sure if getMatchingServer and Locations are correct	
 	ServerConfig* server = getMatchingServer(request, servers, res);
 	if (!server)
 		return res;

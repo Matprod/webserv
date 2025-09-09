@@ -6,7 +6,7 @@
 /*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 17:04:21 by Matprod           #+#    #+#             */
-/*   Updated: 2025/08/08 17:54:39 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/09 14:08:03 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,7 @@ struct Request {
 	std::string version;
 	std::map<std::string, std::string> headers;
 	std::string body;
+	const ServerConfig* config;
 };
 
 int parse_request(int socket, Request& req, std::map<int, std::string>& buffers, std::map<int, time_t> lastActivity);

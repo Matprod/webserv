@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerConfig.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
+/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 20:07:43 by Matprod           #+#    #+#             */
-/*   Updated: 2025/08/19 00:54:05 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/09/09 13:42:35 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -112,5 +112,13 @@ bool Config::parseServerDirective(const std::string& directive, const std::vecto
 		return ERROR;
 	}
 	return 0;
+}
+
+
+std::ostream &operator<<(std::ostream &o, const ServerConfig&i) {
+	o << i.socketFd << std::endl
+	<< i.root << std::endl
+	<< i.port << std::endl;
+	return o;	
 }
 

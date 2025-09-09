@@ -6,21 +6,22 @@
 /*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:29:23 by allan             #+#    #+#             */
-/*   Updated: 2025/09/08 13:54:32 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/09 14:24:53 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
-void setup_pollfds(const std::vector<ServerConfig>& servers, std::vector<pollfd>& fds, std::map<int, bool>& isServerFd) {
+void setup_pollfds(const std::vector<ServerConfig>& servers, std::vector<pollfd>& fds, std::map<int, bool>& isServerFd, std::map<int, const ServerConfig*> &pollFdToServerConfig) {
 	for (size_t i = 0; i < servers.size(); ++i) {
-		if (servers[i].socketFd > 0) {
+		if (servers[i].socketFd >= 0) {
 			pollfd pfd;
 			pfd.fd = servers[i].socketFd;
 			pfd.events = POLLIN;
 			pfd.revents = 0;
 			fds.push_back(pfd);
 			isServerFd[servers[i].socketFd] = true;
+			pollFdToServerConfig[servers[i].socketFd] = &servers[i];
 		}
 	}
 }
@@ -28,7 +29,8 @@ void setup_pollfds(const std::vector<ServerConfig>& servers, std::vector<pollfd>
 void check_timeouts(std::vector<pollfd>& fds,
 	std::map<int, time_t>& lastActivity,
 	std::map<int, std::string>& clientBuffers,
-	std::map<int, bool>& isServerFd) {
+	std::map<int, bool>& isServerFd,
+	std::map<int, const ServerConfig*>& clientFdToServerConfig) {
 
 	time_t now = time(NULL);
 	for (size_t i = 0; i < fds.size(); ) {
@@ -36,7 +38,7 @@ void check_timeouts(std::vector<pollfd>& fds,
 		if (!isServerFd[fd]) {
 			if (now - lastActivity[fd] > CLIENT_TIMEOUT) {
 				std::cout << "Client " << fd << " inactif, fermeture.\n";
-				close_client(fd, fds, isServerFd, clientBuffers, lastActivity);
+				close_client(fd, fds, isServerFd, clientBuffers, lastActivity, clientFdToServerConfig);
 				continue;
 			}
 		}
@@ -49,11 +51,13 @@ int serverLoop(const std::vector<ServerConfig>& servers) {
 	std::map<int, bool> isServerFd;
 	std::map<int, std::string> clientBuffers;
 	std::map<int, time_t> lastActivity;
+	std::map<int, const ServerConfig*> pollFdToServerConfig;
+	std::map<int, const ServerConfig*> clientFdToServerConfig;
 
-	setup_pollfds(servers, fds, isServerFd);
+	setup_pollfds(servers, fds, isServerFd, pollFdToServerConfig);
 
 	while (true) {
-		check_timeouts(fds, lastActivity, clientBuffers, isServerFd);
+		check_timeouts(fds, lastActivity, clientBuffers, isServerFd, clientFdToServerConfig);
 
 		int ready = poll(fds.data(), fds.size(), -1);
 		if (ready < 0) {
@@ -64,19 +68,24 @@ int serverLoop(const std::vector<ServerConfig>& servers) {
 		for (int i = 0; i < static_cast<int>(fds.size()); ++i) {
 			if (fds[i].revents & POLLIN) {
 				if (isServerFd[fds[i].fd]) {
-					handle_new_connection(fds[i].fd, fds, isServerFd, lastActivity);
+					const ServerConfig *config = pollFdToServerConfig[fds[i].fd];
+					handle_new_connection(fds[i].fd, config, fds, isServerFd, lastActivity, clientFdToServerConfig);
 				}
 				else {
 					Request req;
-					int parse_status = handle_client_request(fds[i].fd, fds, i, isServerFd, clientBuffers, lastActivity, req);
+					req.config = clientFdToServerConfig[fds[i].fd];
+					int parse_status = handle_client_request(fds[i].fd, fds, i, isServerFd, clientBuffers, lastActivity, req, clientFdToServerConfig);
 					//std::cout << "REQUEST AFTER PARSER:\n" << req << std::endl;
 					if (parse_status == REQUEST_OK) {
 						Response res = buildResponse(req, servers);
 						std::string rawResponse = res.responseToString();
 						std::cout << "RESPONSE:\n" << rawResponse << std::endl;
 						send(fds[i].fd, rawResponse.c_str(), rawResponse.size(), 0);
-						if (res.closingConnection == true)
-							close_client(fds[i].fd, fds, isServerFd, clientBuffers, lastActivity);
+						if (res.closingConnection == true) {
+							close_client(fds[i].fd, fds, isServerFd, clientBuffers, lastActivity, clientFdToServerConfig);
+							--i;
+							continue;
+						}
 					}
 					else if (parse_status == REQUEST_INCOMPLETE) {
 						// WAITING
