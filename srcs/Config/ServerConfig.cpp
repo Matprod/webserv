@@ -3,16 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   ServerConfig.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
+/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 20:07:43 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/09 13:42:35 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/11 15:59:25 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ServerConfig.hpp"
 #include "Config.hpp"
-
 
 static int is_valid_ipv4(const char *ip) {
 	regex_t regex;
@@ -30,7 +29,23 @@ static int is_valid_ipv4(const char *ip) {
 }	
 
 bool Config::parseServerDirective(const std::string& directive, const std::vector<std::string>& values, ServerConfig* srv) {
-	if (directive == "listen") {
+	if (directive == "allow_methods") {
+		for (size_t i = 0; i < values.size(); ++i)
+			srv->allow_methods.insert(values[i]);
+	} else if (directive == "autoindex" || directive == "directory_listing") {
+		if (values.size() != 1) {
+			std::cerr << "Invalid " << directive << " directive" << std::endl;
+			return ERROR;
+		}
+		if (values[0] == "on" || values[0] == "on;")
+			srv->autoindex = true;
+		else if (values[0] == "off" || values[0] == "off;")
+			srv->autoindex = false;
+		else {
+			std::cerr << "Invalid " << directive << " directive value: " << values[0] << std::endl;
+			return ERROR;
+		}
+	} else if (directive == "listen") {
 		if (values.size() != 1) {
 			std::cerr << "Invalid listen directive" << std::endl;
 			return ERROR;
@@ -84,6 +99,7 @@ bool Config::parseServerDirective(const std::string& directive, const std::vecto
 			return ERROR;
 		}
 		srv->root = values[0];
+		srv->has_root = true;
 	} else if (directive == "error_page") {
 		if (values.size() < 2) {
 			std::cerr << "Invalid error_page directive" << std::endl;

@@ -63,12 +63,14 @@ ServerConfig* findMatchingServer(const Request& req, const std::vector<ServerCon
 	return servers.empty() ? NULL : const_cast<ServerConfig*>(&servers[0]);
 }
 
-LocationConfig* findMatchingLocation(const std::string& uri, const std::vector<LocationConfig>& locations) {
+LocationConfig* findMatchingLocation(const std::string& uri, const std::vector<LocationConfig>& locations, bool &use_location) {
 	LocationConfig* best_match = NULL;
+	use_location = false;
 	size_t longest_match = 0;
 	for (size_t i = 0; i < locations.size(); ++i) {
 		if (uri.find(locations[i].path) == 0 && locations[i].path.length() > longest_match) {
 			best_match = const_cast<LocationConfig*>(&locations[i]);
+			use_location = true;
 			longest_match = locations[i].path.length();
 		}
 	}

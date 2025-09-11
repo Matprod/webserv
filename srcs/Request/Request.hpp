@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
+/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 17:04:21 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/09 14:08:03 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/11 15:15:11 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,9 +30,11 @@ struct Request {
 	std::map<std::string, std::string> headers;
 	std::string body;
 	const ServerConfig* config;
+	bool use_location;
 };
 
 int parse_request(int socket, Request& req, std::map<int, std::string>& buffers, std::map<int, time_t> lastActivity);
+int sanitizeRequestUri(Request& req);
 std::string to_lower(const std::string& str);
 void printRequest(const Request& req);
 std::ostream &operator<<(std::ostream &o, const Request &i);

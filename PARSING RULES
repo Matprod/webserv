@@ -1,0 +1,8 @@
+HOW THE PARSER SHOULD BE MODIFIED:
+
+1 - Don't allow two servers to use the same port / IP
+(What about the case where a server has two or more ports?)
+
+2- Don't allow config that have no root in the raw config (not the location)
+
+

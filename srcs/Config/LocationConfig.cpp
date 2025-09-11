@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   LocationConfig.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
+/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 20:16:00 by Matprod           #+#    #+#             */
-/*   Updated: 2025/07/17 19:38:27 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/09/10 14:44:11 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,6 +42,7 @@ bool Config::parseLocationDirective(const std::string& directive, const std::vec
 			return ERROR;
 		}
 		loc->root = values[0];
+		loc->has_root = true;
 	} else if (directive == "autoindex" || directive == "directory_listing") {
 		if (values.size() != 1) {
 			std::cerr << "Invalid " << directive << " directive" << std::endl;

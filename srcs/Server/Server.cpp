@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
+/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:29:23 by allan             #+#    #+#             */
-/*   Updated: 2025/09/09 14:24:53 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/11 16:11:34 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,12 +69,20 @@ int serverLoop(const std::vector<ServerConfig>& servers) {
 			if (fds[i].revents & POLLIN) {
 				if (isServerFd[fds[i].fd]) {
 					const ServerConfig *config = pollFdToServerConfig[fds[i].fd];
+					if (!config) {
+						std::cerr << "ERROR POINTER 1" << std::endl;
+						exit(1);
+					}
 					handle_new_connection(fds[i].fd, config, fds, isServerFd, lastActivity, clientFdToServerConfig);
 				}
 				else {
 					Request req;
 					req.config = clientFdToServerConfig[fds[i].fd];
-					int parse_status = handle_client_request(fds[i].fd, fds, i, isServerFd, clientBuffers, lastActivity, req, clientFdToServerConfig);
+					if (!req.config) {
+						std::cerr << "ERROR POINTER 1" << std::endl;
+						exit(1);
+					}
+				 	int parse_status = handle_client_request(fds[i].fd, fds, i, isServerFd, clientBuffers, lastActivity, req, clientFdToServerConfig);
 					//std::cout << "REQUEST AFTER PARSER:\n" << req << std::endl;
 					if (parse_status == REQUEST_OK) {
 						Response res = buildResponse(req, servers);

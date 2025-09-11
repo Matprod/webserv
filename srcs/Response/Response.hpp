@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
+/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 13:58:27 by allan             #+#    #+#             */
-/*   Updated: 2025/09/08 13:54:19 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/10 15:38:18 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,11 @@
 #include "../Request/Request.hpp"
 #include "../Cgi/CgiExecutor.hpp"
 #include "ResponseUtils.hpp"
+#include "EffectiveRoute.hpp"
+
+#define GET 1
+#define POST 2
+#define DELETE 3
 
 #define MULTIPART 2
 #define SINGLEPART 3
@@ -62,6 +67,7 @@ struct File {
 	int checkContentType(const std::string &contentType) const;
 };
 
+bool isMethodAllowed(int method, std::set<std::string> allow_methods);
 Response buildResponse(const Request& request, const std::vector<ServerConfig>& servers);
 Response handleGet(const Request& request);
 Response handlePost(const Request& request);

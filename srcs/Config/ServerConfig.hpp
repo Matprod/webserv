@@ -3,20 +3,20 @@
 /*                                                        :::      ::::::::   */
 /*   ServerConfig.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
+/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 20:09:14 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/09 14:02:14 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/11 16:00:07 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
-#include "LocationConfig.hpp"
 #include <string>
 #include <vector>
 #include <map>
 #include <set>
+class LocationConfig;
 
 class ServerConfig {
 public:
@@ -29,11 +29,16 @@ public:
 	std::vector<LocationConfig> locations;
 	std::vector<std::string> index;
 	
+	std::set<std::string> allow_methods;
 	int socketFd;
-	int ServerLoop(std::vector<ServerConfig>& servers);//Need to be implemented? 
 	
-	ServerConfig();//Need to be implemented?
-	virtual ~ServerConfig();//Need to be implemented?
+	bool has_root;
+	bool autoindex;
+	
+	int ServerLoop(const std::vector<ServerConfig>& servers); 
+	
+	ServerConfig();
+	virtual ~ServerConfig();
 };
 
 std::ostream &operator<<(std::ostream &o, const ServerConfig&i);

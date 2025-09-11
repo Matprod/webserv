@@ -1,7 +1,7 @@
 NAME = webserv
 
 CXX = g++
-CXXFLAGS = -Wall -Wextra -Werror -std=c++98
+CXXFLAGS = -Wall -Wextra -std=c++98
 
 SRCS = 	srcs/main.cpp \
 		srcs/Config/Config.cpp \
@@ -12,6 +12,7 @@ SRCS = 	srcs/main.cpp \
 		srcs/Request/RequestBody.cpp \
 		srcs/Response/Response.cpp \
 		srcs/Response/ResponseUtils.cpp \
+		srcs/Response/EffectiveRoute.cpp \
 		srcs/Config/ServerConfig.cpp \
 		srcs/Config/LocationConfig.cpp \
 		srcs/Config/ConfigParser.cpp \

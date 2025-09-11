@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
+/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/22 10:58:52 by Matprod           #+#    #+#             */
-/*   Updated: 2025/08/19 00:52:51 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/09/11 16:42:47 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,7 @@ private:
     bool parseFile(const std::string& path);
     bool parseServerDirective(const std::string& directive, const std::vector<std::string>& values, ServerConfig* srv);
     bool parseLocationDirective(const std::string& directive, const std::vector<std::string>& values, LocationConfig* srv);
+	bool serversHaveRoot() const;
 
 public:
     Config(const std::string& path);

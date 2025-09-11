@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigParser.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
+/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 20:17:11 by Matprod           #+#    #+#             */
-/*   Updated: 2025/07/12 20:18:44 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/09/11 16:48:34 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -136,4 +136,12 @@ bool Config::parseFile(const std::string& path) {
 	}
 	file.close();
 	return (0);
+}
+
+bool Config::serversHaveRoot() const {
+	for (std::vector<ServerConfig>::const_iterator it = servers.begin(); it != servers.end(); ++it) {
+		if (it->has_root == false)
+			return ERROR;
+	}
+	return SUCCESS;
 }

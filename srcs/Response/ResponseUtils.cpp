@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ResponseUtils.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
+/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/22 17:45:56 by Matprod           #+#    #+#             */
-/*   Updated: 2025/07/23 18:43:15 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/09/11 12:19:23 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,25 +63,15 @@ std::string readChunkedBody(const std::string& rawData) {
 
 ServerConfig* getMatchingServer(const Request& req, const std::vector<ServerConfig>& servers, Response& res) {
 	ServerConfig* server = findMatchingServer(req, servers);
-	if (!server) {
-		res.statusCode = 400;
-		res.statusMessage = getStatusMessage(400);
-		res.body = "Bad Request: No matching server";
-		res.headers["Content-Type"] = "text/plain";
-		res.headers["Content-Length"] = toString<size_t>(res.body.size());
-	}
+	if (!server)
+		res.createResponse(400, "");
 	return server;
 }
 
-LocationConfig* getMatchingLocation(const Request& req, ServerConfig& server, Response& res) {
-	LocationConfig* loc = findMatchingLocation(req.uri, server.locations);
-	if (!loc) {
-		res.statusCode = 404;
-		res.statusMessage = getStatusMessage(404);
-		res.body = "Not Found";
-		res.headers["Content-Type"] = "text/plain";
-		res.headers["Content-Length"] = toString<size_t>(res.body.size());
-	}
+LocationConfig* getMatchingLocation(const Request& req, ServerConfig& server, Response& res, bool &use_location) {
+	LocationConfig* loc = findMatchingLocation(req.uri, server.locations, use_location);
+	if (!loc)
+		res.createResponse(404, "");
 	return loc;
 }
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
+/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:44:20 by allan             #+#    #+#             */
-/*   Updated: 2025/08/15 01:38:25 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/09/10 10:49:55 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -97,19 +97,13 @@ int parse_request(int socket, Request& req, std::map<int, std::string>& buffers,
 	std::istringstream iss(request.substr(0, header_end));
 	std::string request_line;
 	if (!std::getline(iss, request_line))
-	{
 		return REQUEST_ERROR;	
-	}
 	if (!request_line.empty() && request_line[request_line.size() - 1] == '\r')
     	request_line.erase(request_line.size() - 1);
 	if (parse_request_line(request_line, req) != REQUEST_OK)
-	{
 		return REQUEST_ERROR;
-	}
 	if (parse_headers(iss, req) != REQUEST_OK)
-	{
 		return REQUEST_ERROR;
-	}
 	
 	// Check if it's chunked and size of content length
 	bool is_chunked = req.headers.count("transfer-encoding") && to_lower(req.headers["transfer-encoding"]) == "chunked";
@@ -130,7 +124,17 @@ int parse_request(int socket, Request& req, std::map<int, std::string>& buffers,
 	} else {
 		return parse_body_normal(request, body_start, content_length, req, buffers, socket);
 	}
+	return REQUEST_OK;
 }
+
+/* int sanitizeRequestUri(Request& req) {
+	
+	std::string uri = req.uri;
+	std::stack
+	
+	
+	return REQUEST_OK;	
+} */
 
 void printRequest(const Request& req) {
 	std::cout << "Request Details:" << std::endl;

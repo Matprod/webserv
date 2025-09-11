@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   LocationConfig.hpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Matprod <matprod42@gmail.com>              +#+  +:+       +#+        */
+/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 20:15:57 by Matprod           #+#    #+#             */
-/*   Updated: 2025/07/13 21:41:15 by Matprod          ###   ########.fr       */
+/*   Updated: 2025/09/11 14:44:48 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,8 @@
 #include <set>
 #include <cstdlib>
 # include <iostream>
+
+#include "ServerConfig.hpp"
 
 
 class LocationConfig {// Need to be in canonical form ?
@@ -32,8 +34,11 @@ public:
 	int redirect_status;
 	std::string redirect_url;
 	std::string alias;
+	bool has_root;
+	bool has_alias;
 
 	LocationConfig();
+	LocationConfig(const LocationConfig& src);
+	LocationConfig& operator=(const LocationConfig& rhs);
 	virtual ~LocationConfig();
 };
-

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
+/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:42:06 by allan             #+#    #+#             */
-/*   Updated: 2025/09/09 14:15:01 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/11 15:37:33 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,13 +66,13 @@ int handle_client_request(int fd, std::vector<pollfd>& fds, int& i,
 		std::string connection_header = to_lower(req.headers["connection"]);
 		bool keepAlive = (req.version == "HTTP/1.1" && connection_header != "close");
 
+		//JE CROIS ON DOIT PAS FERMER MAINTENANT
 		if (!keepAlive) {
 			close_client(fd, fds, isServerFd, clientBuffers, lastActivity, clientFdToServerConfig);
 			--i;
 		}
-		else {
+		else
 			std::cout << "Connexion in keep alive" << std::endl;;
-		}
 	}
 	else if (result == REQUEST_INCOMPLETE) {
 		//std::cout << "Incomplete request..\n";

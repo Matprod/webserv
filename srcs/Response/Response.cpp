@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
+/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:45:12 by allan             #+#    #+#             */
-/*   Updated: 2025/09/09 14:26:05 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/11 17:12:32 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,39 +14,56 @@
 
 Response buildResponse(const Request& request, const std::vector<ServerConfig>& servers) {
 	Response res;
-	res.version = "HTTP/1.1";
-
-	std::cout << "REQUEST CONFIG\n" << *request.config << std::endl;
+	bool use_location = false;
+	
+	//std::cout << "REQUEST CONFIG\n" << *request.config << std::endl;
 	
 	//Here I'm not sure if getMatchingServer and Locations are correct	
-	ServerConfig* server = getMatchingServer(request, servers, res);
-	if (!server)
+	ServerConfig* oldServer = getMatchingServer(request, servers, res);
+	if (!oldServer)
 		return res;
-	LocationConfig* loc = getMatchingLocation(request, *server, res);
+	LocationConfig* loc = getMatchingLocation(request, *oldServer, res, use_location);
 	if (!loc)
 		return res;
 	if (handleRedirect(*loc, res))
 		return res;
 	if (isCGIRequest(*loc, request.uri))
-		return executeCGI(request, *loc, *server);
+		return executeCGI(request, *loc, *oldServer);
 	
-	if (request.method == "GET") {
-		return handleGet(request);
-	} else if (request.method == "POST") {
-		return handlePost(request);
-	} else if (request.method == "DELETE") {
-		return handleDelete(request);
-	} else {
-		Response res;
-		res.version = "HTTP/1.1";
-		res.statusCode = 405;
-		res.statusMessage = getStatusMessage(405);
-		res.headers["Content-Type"] = "text/plain";
-		res.body = "Method Not Allowed";
-		res.headers["Content-Length"] = toString<size_t>(res.body.size());
+	EffectiveRoute eff;
+	if (use_location && eff.createEffectiveRoute(request.config, loc) == false) {
+		res.createResponse(500, "");
+		return res;
+	} else if (eff.createEffectiveRoute(request.config) == false) {
+		res.createResponse(500, "");
 		return res;
 	}
+		
+	int result;
+	result = eff.createEffectivePath(request.uri);
+	if (result != PATH_OK) {
+		res.createResponse(result, "");
+		return res;
+	}
+
+	
+	if (request.method == "GET" && isMethodAllowed(GET, eff.allow_methods)) {
+		return handleGet(request);
+	} else if (request.method == "POST" && isMethodAllowed(POST, eff.allow_methods)) {
+		return handlePost(request);
+	} else if (request.method == "DELETE" && isMethodAllowed(DELETE, eff.allow_methods)) {
+		return handleDelete(request);
+	} else
+		res.createResponse(405, "");
+		
+	return res;
 }
+
+/* 
+1 - Add Sanitize Path before and after Effective Route/Path
+2 - Handle AutoIndex
+3 - Modify behavior of File (Check upload_path element in config)
+*/
 
 //////////////////////////////////////////////////////////
 //					GET METHOD							//
@@ -60,6 +77,7 @@ Response handleGet(const Request& request) {
     if (checkRequestVersion(request.version, file.response) == ERROR)
         return file.response;
 
+		
     // Validate URI -> get fileName
     if (file.getFileName(request.uri) == ERROR)
         return file.response;
@@ -292,6 +310,18 @@ void File::createDeleteResponse(const int err) {
 //					UTILS								//
 //////////////////////////////////////////////////////////
 
+bool isMethodAllowed(int method, std::set<std::string> allow_methods) {
+	switch (method) {
+		case 1: if (allow_methods.find("GET") == allow_methods.end()) return false;
+				else return true;
+		case 2: if (allow_methods.find("POST") == allow_methods.end()) return false;
+				else return true;
+		case 3: if (allow_methods.find("DELETE") == allow_methods.end()) return false;
+				else return true;
+	}
+	return false;
+}
+
 int File::getFileData(const Request& request) {
 	//STEP 1: Check Header Content Type (Empty or application/octet-stream)
 	const std::map<std::string, std::string> headers = request.headers;
@@ -412,31 +442,6 @@ void Response::createResponse(unsigned int code, const std::string& bodyText) {
         }
     }
 }
-
-/* void Response::createResponse(unsigned int code, const std::string& reason) {
-	version = "HTTP/1.1";	
-	statusCode = code;
-	statusMessage = getStatusMessage(code);
-	headers["Content-Length"] = toString<size_t>(reason.size());
-	if (reason.size() > 0) {
-		body = reason;
-		headers["Content-Type"] = "text/plain";
-	}
-	if (closingConnection == 1)
-		headers["Connection"] = "close";
-	else {
-		switch(statusCode) {
-			case 400:
-			case 411:
-			case 413:
-			case 414:
-			case 415:
-			case 505:
-				headers["Connection"] = "close";
-				closingConnection = true;
-		}
-	}
-} */
 
 std::string getStatusMessage(int statusCode) {
 	switch(statusCode) {
