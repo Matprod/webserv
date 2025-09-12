@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
+/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:45:12 by allan             #+#    #+#             */
-/*   Updated: 2025/09/11 17:12:32 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/12 23:14:46 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,8 +18,9 @@ Response buildResponse(const Request& request, const std::vector<ServerConfig>& 
 	
 	//std::cout << "REQUEST CONFIG\n" << *request.config << std::endl;
 	
+	std::cout << "A" << std::endl;
 	//Here I'm not sure if getMatchingServer and Locations are correct	
-	ServerConfig* oldServer = getMatchingServer(request, servers, res);
+/* 	ServerConfig* oldServer = getMatchingServer(request, servers, res);
 	if (!oldServer)
 		return res;
 	LocationConfig* loc = getMatchingLocation(request, *oldServer, res, use_location);
@@ -28,16 +29,21 @@ Response buildResponse(const Request& request, const std::vector<ServerConfig>& 
 	if (handleRedirect(*loc, res))
 		return res;
 	if (isCGIRequest(*loc, request.uri))
-		return executeCGI(request, *loc, *oldServer);
+		return executeCGI(request, *loc, *oldServer); */
 	
+	//LocationConfig* loc = getMatchingLocation(request, request.config, res, use_location);
+	std::cout << "B" << std::endl;
+		
 	EffectiveRoute eff;
-	if (use_location && eff.createEffectiveRoute(request.config, loc) == false) {
+/* 	if (use_location && eff.createEffectiveRoute(request.config, loc) == false) {
 		res.createResponse(500, "");
 		return res;
-	} else if (eff.createEffectiveRoute(request.config) == false) {
+	} else  */
+	if (eff.createEffectiveRoute(request.config) == false) {
 		res.createResponse(500, "");
 		return res;
 	}
+	std::cout << "C" << std::endl;
 		
 	int result;
 	result = eff.createEffectivePath(request.uri);
@@ -45,14 +51,16 @@ Response buildResponse(const Request& request, const std::vector<ServerConfig>& 
 		res.createResponse(result, "");
 		return res;
 	}
+	std::cout << "D" << std::endl;
 
-	
+	std::cout << eff << std::endl;
+
 	if (request.method == "GET" && isMethodAllowed(GET, eff.allow_methods)) {
-		return handleGet(request);
+		return handleGet(request, eff);
 	} else if (request.method == "POST" && isMethodAllowed(POST, eff.allow_methods)) {
-		return handlePost(request);
+		return handlePost(request, eff);
 	} else if (request.method == "DELETE" && isMethodAllowed(DELETE, eff.allow_methods)) {
-		return handleDelete(request);
+		return handleDelete(request, eff);
 	} else
 		res.createResponse(405, "");
 		
@@ -69,15 +77,22 @@ Response buildResponse(const Request& request, const std::vector<ServerConfig>& 
 //					GET METHOD							//
 //////////////////////////////////////////////////////////
 
-Response handleGet(const Request& request) {
+Response handleGet(const Request& request, EffectiveRoute& eff) {
     File file;
-    file.response.closingConnection = shouldConnectionBeClosed(request.headers);
+	eff.closeConnection = shouldConnectionBeClosed(request.headers);
+    file.response.closingConnection = eff.closeConnection;
 
     // Check HTTP version
     if (checkRequestVersion(request.version, file.response) == ERROR)
-        return file.response;
-
+		return file.response;
+	
+	std::cout << "E" << std::endl;
+	
+	if (eff.isDir)
+		return handleIndex(eff);	
 		
+	std::cout << "F" << std::endl;
+	
     // Validate URI -> get fileName
     if (file.getFileName(request.uri) == ERROR)
         return file.response;
@@ -123,33 +138,169 @@ Response handleGet(const Request& request) {
     return file.response;
 }
 
+Response handleIndex(const EffectiveRoute& eff) {
+	Response response;
+	response.closingConnection = eff.closeConnection;
+	
+	std::string index_path = eff.uri + "index.html";
+	
+	std::cout << "1" << std::endl;
+	int fd = open(index_path.c_str(), O_RDONLY);
+	if (fd < 0) {
+    	switch (errno) {
+    	    case ENOENT:
+				std::cout << "2" << std::endl;
+				return handleAutoIndex(eff);
+			
+    	    case EACCES:   	
+    	    case EPERM:   		
+			case ELOOP:		
+			case ENAMETOOLONG:
+				std::cout << "3" << std::endl;
+				response.createResponse(403, "");
+				return response;
+				
+    	    default:
+				response.createResponse(500, "");
+				return response;
+		}
+	}
+	std::cout << "5" << std::endl;
+	
+	struct stat st;
+	if (stat(index_path.c_str(), &st) != 0) {
+		close(fd);
+		response.createResponse(500, "");
+		return response;
+	} else if (!S_ISREG(st.st_mode)) {
+		close(fd);
+		return handleAutoIndex(eff);
+	}
+	
+	return createIndexResponse(fd, eff.closeConnection);	
+}
+
+Response createIndexResponse(int fd, bool closeConnection) {
+	Response response;
+	response.closingConnection = closeConnection;
+	response.statusCode = 200;
+	response.statusMessage = getStatusMessage(200);
+	response.setHeader("Content-Type", "text/html");
+	
+
+	const size_t BUFSZ = 64 * 1024;
+    std::vector<char> buf(BUFSZ);
+    ssize_t n;
+    while ((n = read(fd, &buf[0], BUFSZ)) > 0)
+		response.body.append(&buf[0], static_cast<std::string::size_type>(n));
+    close(fd);
+
+    if (n < 0) {
+		Response resp;
+		resp.closingConnection = closeConnection;
+		resp.createResponse(500, "");
+		return resp;
+    }
+	
+	response.setHeader("Content-Length", toString<size_t>(response.body.size()));
+	return response;
+}
+
+Response handleAutoIndex(const EffectiveRoute& eff) {
+	
+	if (!eff.autoindex) {
+		std::cout << "Hello:" << eff.autoindex << std::endl;
+		Response response;
+		response.closingConnection = eff.closeConnection;
+		response.createResponse(403, "AutoIndex Not allowed by Default (add rule in config file)");
+		return response;
+	}
+	
+	return createAutoIndexResponse(eff);
+}
+
+Response createAutoIndexResponse(const EffectiveRoute& eff) {
+	Response response;
+	response.closingConnection = eff.closeConnection;
+	
+	response.body = "<!DOCTYPE html>\n";
+	response.body += "<html>\n";
+	response.body += "<head><tittle>Index of ";
+	response.body += eff.uri;
+	response.body += "</tittle></head>\n";
+	response.body += "<body>\n";
+	response.body += "<h1>Index of ";
+	response.body += eff.uri;
+	response.body += "</h1>\n";
+	response.body += "<ul>\n";
+	
+	DIR* dir = opendir(eff.uri.c_str());
+	if (!dir) {
+		Response resp;
+		resp.closingConnection = eff.closeConnection;
+		resp.createResponse(500, "");
+		return response;
+	}
+
+	struct dirent* entry;
+	while ((entry = readdir(dir)) != NULL) {
+    	std::string name = entry->d_name;
+    	if (name == ".") continue;
+
+		struct stat st;
+		std::string currPath = eff.uri + name;
+		if (stat(currPath.c_str(), &st) == 0) {
+			std::string dirPath = name + "/";
+    		if (S_ISDIR(st.st_mode)) { 
+				response.body += "<li><a href=";
+				response.body += dirPath;
+				response.body += ">";
+				response.body += dirPath;
+				response.body += "</a></li>\n";
+			}
+    		else if (S_ISREG(st.st_mode)) { 
+				response.body += "<li><a href=";
+				response.body += name;
+				response.body += ">";
+				response.body += name;
+				response.body += "</a></li>\n";
+			}
+		}
+	}
+	
+	response.body += "</ul>\n";
+	response.body += "</body>\n";
+	response.body += "</html>\n";
+	
+	response.statusCode = 200;
+	response.statusMessage = getStatusMessage(200);
+	response.setHeader("Content-Type", "text/html");
+    response.headers["Content-Length"] = toString<size_t>(response.body.size());
+	
+	return response;
+}
 
 //////////////////////////////////////////////////////////
 //					POST METHOD							//
 //////////////////////////////////////////////////////////
 
 
-Response handlePost(const Request& request) {
+Response handlePost(const Request& request, const EffectiveRoute& eff) {
 	//std::cout << "Post Response" << std::endl;
 	File file;
 	
-
 	file.response.closingConnection = shouldConnectionBeClosed(request.headers);
 	if (checkRequestVersion(request.version, file.response) == ERROR)
 		return file.response;
-	std::cout << "A" << std::endl;	
 	
 	if (file.getFileName(request.uri) == ERROR)
 		return file.response;
-	std::cout << "B" << std::endl;	
 
 	if (file.getFileData(request) == ERROR)
 		return file.response;
-	std::cout << "C" << std::endl;
 
 	if (file.createFile(request.body) == ERROR)
 		return file.response;
-	std::cout << "D" << std::endl;	
 	
 	file.response.createResponse(200, "File Created");
 	return file.response;
@@ -243,7 +394,7 @@ std::string File::generateUniqueFilename() {
 //					DELETE METHOD						//
 //////////////////////////////////////////////////////////
 
-Response handleDelete(const Request& request) {
+Response handleDelete(const Request& request, const EffectiveRoute& eff) {
 	//std::cout << "Delete Response" << std::endl;
 	File file;
 	
@@ -370,6 +521,7 @@ bool File::isValidContentLength(const std::string& contentLength) {
 		return ERROR;
 	return SUCCESS;	
 }
+
 bool shouldConnectionBeClosed(const std::map<std::string, std::string>& headers) {
 	std::map<std::string,std::string>::const_iterator it = headers.find("connection"); 
 	if (it != headers.end()) {
@@ -461,6 +613,16 @@ std::string getStatusMessage(int statusCode) {
 		case 505: return "Version not supported";
 	}
 	return "Unknown";
+}
+
+void Response::setHeader(std::string header, std::string content) {
+	if (headers.find(header) == headers.end()) {
+		if (header == "Content-Type")
+        	headers["Content-Type"] = content;
+		else if (header == "Content-Length")
+        	headers["Content-Length"] = content;
+	}
+	return ;
 }
 
 /* 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   EffectiveRoute.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
+/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/10 14:20:55 by adebert           #+#    #+#             */
-/*   Updated: 2025/09/11 17:09:33 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/12 23:18:12 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,8 @@
 bool EffectiveRoute::createEffectiveRoute(const ServerConfig* srv, const LocationConfig* loc) {
 	server = srv;
 	location = loc;
+	useLocation = true;
+	
 	if (loc->has_alias) {
 		use_alias = true;
 		alias = loc->alias;
@@ -47,6 +49,7 @@ bool EffectiveRoute::createEffectiveRoute(const ServerConfig* srv, const Locatio
 	location_prefix = loc->path;
 	redirect_status = loc->redirect_status;
 	redirect_url = loc->redirect_url;
+	closeConnection = false;
 	
 	return true;
 }
@@ -54,6 +57,7 @@ bool EffectiveRoute::createEffectiveRoute(const ServerConfig* srv, const Locatio
 bool EffectiveRoute::createEffectiveRoute(const ServerConfig* srv) {
 	server = srv;
 	location = NULL;
+	useLocation = false;
 	
 	use_alias = false;
 	if (srv->has_root)
@@ -68,6 +72,8 @@ bool EffectiveRoute::createEffectiveRoute(const ServerConfig* srv) {
 		allow_methods.insert("POST");
 		allow_methods.insert("DELETE");
 	}
+	
+	autoindex = srv->autoindex;
 	
 	location_prefix = "/";
 	redirect_status = 0;
@@ -95,7 +101,6 @@ int EffectiveRoute::createEffectivePath(std::string req_uri) {
 	
 	if (uri.empty()) return 500;	
 	
-	std::cout << *this << std::endl;
 	
 	int result;
 	result = isValidPath();
@@ -117,20 +122,40 @@ std::string joinPaths(const std::string& base, const std::string& suffix) {
 
 
 int EffectiveRoute::isValidPath(void) {
+	//std::cout << *this << std::endl;
+	
 	struct stat st;
 	if (stat(uri.c_str(), &st) != 0) {
     	switch (errno) {
-    	    case ENOENT:   		return 404; // No such file or directory
-    	    case ENOTDIR:  		return 404; // Component of the path is not a dir
-    	    case EACCES:   		return 403; // Permission denied
-    	    case EPERM:   		return 403; // Operation not permitted
-			case ELOOP:			return 403;
-			case ENAMETOOLONG:	return 403;
-    	    default:       		return 500; // Unexpected server error
+    	    case ENOENT:   		
+				std::cout << "a" << std::endl;
+				return 404; // No such file or directory
+    	    case ENOTDIR:  		
+				std::cout << "b" << std::endl;
+				return 404; // Component of the path is not a dir
+    	    case EACCES:   		
+				std::cout << "c" << std::endl;
+				return 403; // Permission denied
+    	    case EPERM:   		
+				std::cout << "d" << std::endl;
+				return 403; // Operation not permitted
+			case ELOOP:			
+				std::cout << "e" << std::endl;
+				return 403;
+			case ENAMETOOLONG:	
+				std::cout << "f" << std::endl;
+				return 403;
+    	    default:       		
+				std::cout << "g" << std::endl;
+				return 500; // Unexpected server error
  		   }
 	} 
 	
-	isDir = S_ISDIR(st.st_mode);
+	if (S_ISDIR(st.st_mode)) {
+		isDir = true;
+		if (uri.empty() || uri[uri.size() - 1] != '/')
+			uri += '/';
+	}
 	return PATH_OK;
 }
 
@@ -147,6 +172,9 @@ std::ostream &operator<<(std::ostream &o, const EffectiveRoute&i) {
             o << ", ";
         o << *it;
     }
+	o << (i.useLocation ? "yes" : "no") << "\n";
+/* 	if (i.useLocation && i.location)
+		o << "Location Path:\t" << i.location->path << "\n"; */
 	
     o << std::endl;	
 

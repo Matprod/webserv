@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ResponseUtils.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
+/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/22 17:45:56 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/11 12:19:23 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/12 22:41:35 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,8 +68,8 @@ ServerConfig* getMatchingServer(const Request& req, const std::vector<ServerConf
 	return server;
 }
 
-LocationConfig* getMatchingLocation(const Request& req, ServerConfig& server, Response& res, bool &use_location) {
-	LocationConfig* loc = findMatchingLocation(req.uri, server.locations, use_location);
+LocationConfig* getMatchingLocation(const Request& req, const ServerConfig* server, Response& res, bool &use_location) {
+	LocationConfig* loc = findMatchingLocation(req.uri, server->locations, use_location);
 	if (!loc)
 		res.createResponse(404, "");
 	return loc;

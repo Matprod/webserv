@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
+/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 13:58:27 by allan             #+#    #+#             */
-/*   Updated: 2025/09/10 15:38:18 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/12 22:20:30 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 #include <iostream>
 #include <map>
 #include <sstream>
+#include <dirent.h>
 #include "../Request/Request.hpp"
 #include "../Cgi/CgiExecutor.hpp"
 #include "ResponseUtils.hpp"
@@ -39,6 +40,7 @@ struct Response {
 
 	std::string responseToString() const;
 	void createResponse(unsigned int code, const std::string& reason);
+	void setHeader(std::string header, std::string content);
 };
 
 template <typename T>
@@ -69,9 +71,13 @@ struct File {
 
 bool isMethodAllowed(int method, std::set<std::string> allow_methods);
 Response buildResponse(const Request& request, const std::vector<ServerConfig>& servers);
-Response handleGet(const Request& request);
-Response handlePost(const Request& request);
-Response handleDelete(const Request& request);
+Response handleGet(const Request& request, EffectiveRoute& eff);
+Response handleIndex(const EffectiveRoute& eff);
+Response createIndexResponse(int fd, bool closeConnection);
+Response handleAutoIndex(const EffectiveRoute& eff);
+Response createAutoIndexResponse(const EffectiveRoute& eff);
+Response handlePost(const Request& request, const EffectiveRoute& eff);
+Response handleDelete(const Request& request, const EffectiveRoute& eff);
 std::string getStatusMessage(int statusCode);
 int checkRequestVersion(const std::string& version, Response& response);
 bool shouldConnectionBeClosed(const std::map<std::string, std::string>& headers);
