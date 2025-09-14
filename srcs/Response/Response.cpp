@@ -6,7 +6,7 @@
 /*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:45:12 by allan             #+#    #+#             */
-/*   Updated: 2025/09/12 23:14:46 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/14 12:04:43 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,8 @@ Response buildResponse(const Request& request, const std::vector<ServerConfig>& 
 		res.createResponse(500, "");
 		return res;
 	} else  */
+	eff.getMethod = request.method == "GET" ? true : false;
+
 	if (eff.createEffectiveRoute(request.config) == false) {
 		res.createResponse(500, "");
 		return res;
@@ -78,64 +80,45 @@ Response buildResponse(const Request& request, const std::vector<ServerConfig>& 
 //////////////////////////////////////////////////////////
 
 Response handleGet(const Request& request, EffectiveRoute& eff) {
-    File file;
+/*     File file; */
+	Response response;
 	eff.closeConnection = shouldConnectionBeClosed(request.headers);
-    file.response.closingConnection = eff.closeConnection;
+    response.closingConnection = eff.closeConnection;
 
     // Check HTTP version
-    if (checkRequestVersion(request.version, file.response) == ERROR)
-		return file.response;
-	
-	std::cout << "E" << std::endl;
+    if (checkRequestVersion(request.version, response) == ERROR)
+		return response;
 	
 	if (eff.isDir)
 		return handleIndex(eff);	
 		
-	std::cout << "F" << std::endl;
-	
-    // Validate URI -> get fileName
-    if (file.getFileName(request.uri) == ERROR)
-        return file.response;
-
-    // Build file path
-    file.filePath = "upload/" + file.fileName;
-
-    // Check if file exists
-    if (!file.fileExists(file.filePath)) {
-        file.response.createResponse(404, "File not found");
-        return file.response;
-    }
-
-    // Open file for reading
-    std::ifstream inFile(file.filePath.c_str(), std::ios::binary);
+    std::ifstream inFile(eff.uri.c_str(), std::ios::binary);
     if (!inFile) {
-        file.response.createResponse(500, "Failed to open file");
-        return file.response;
+        response.createResponse(500, "Failed to open file");
+        return response;
     }
-
-    // Read file content
+	
     std::ostringstream buffer;
     buffer << inFile.rdbuf();
     std::string content = buffer.str();
-
+	
     inFile.close();
     if (!inFile) {
-        file.response.createResponse(500, "Error closing file");
-        return file.response;
+        response.createResponse(500, "Error closing file");
+        return response;
     }
-
+	
     // Success
-    file.response.version = "HTTP/1.1";
-    file.response.statusCode = 200;
-    file.response.statusMessage = "OK";
-    file.response.body = content;
-    file.response.headers["Content-Length"] = toString<size_t>(content.size());
-    file.response.headers["Content-Type"] = "application/octet-stream";
+    response.version = "HTTP/1.1";
+    response.statusCode = 200;
+    response.statusMessage = "OK";
+    response.body = content;
+    response.headers["Content-Length"] = toString<size_t>(content.size());
+    response.headers["Content-Type"] = "application/octet-stream";
+    if (response.closingConnection)
+        response.headers["Connection"] = "close";
 
-    if (file.response.closingConnection)
-        file.response.headers["Connection"] = "close";
-
-    return file.response;
+    return response;
 }
 
 Response handleIndex(const EffectiveRoute& eff) {
@@ -146,7 +129,7 @@ Response handleIndex(const EffectiveRoute& eff) {
 	
 	std::cout << "1" << std::endl;
 	int fd = open(index_path.c_str(), O_RDONLY);
-	if (fd < 0) {
+	if (fd < 0) { // Checking Errno is allowed here: open is neither a write or read action
     	switch (errno) {
     	    case ENOENT:
 				std::cout << "2" << std::endl;
@@ -183,6 +166,7 @@ Response handleIndex(const EffectiveRoute& eff) {
 Response createIndexResponse(int fd, bool closeConnection) {
 	Response response;
 	response.closingConnection = closeConnection;
+    response.version = "HTTP/1.1";
 	response.statusCode = 200;
 	response.statusMessage = getStatusMessage(200);
 	response.setHeader("Content-Type", "text/html");
@@ -221,13 +205,14 @@ Response handleAutoIndex(const EffectiveRoute& eff) {
 
 Response createAutoIndexResponse(const EffectiveRoute& eff) {
 	Response response;
+    response.version = "HTTP/1.1";
 	response.closingConnection = eff.closeConnection;
 	
 	response.body = "<!DOCTYPE html>\n";
 	response.body += "<html>\n";
-	response.body += "<head><tittle>Index of ";
+	response.body += "<head><title>Index of ";
 	response.body += eff.uri;
-	response.body += "</tittle></head>\n";
+	response.body += "</title></head>\n";
 	response.body += "<body>\n";
 	response.body += "<h1>Index of ";
 	response.body += eff.uri;
@@ -293,102 +278,20 @@ Response handlePost(const Request& request, const EffectiveRoute& eff) {
 	if (checkRequestVersion(request.version, file.response) == ERROR)
 		return file.response;
 	
-	if (file.getFileName(request.uri) == ERROR)
+	if (file.getFileName(eff) == ERROR)
 		return file.response;
+	std::cout << "FileName:\t" << file.fileName << std::endl;
 
 	if (file.getFileData(request) == ERROR)
 		return file.response;
 
-	if (file.createFile(request.body) == ERROR)
+	if (file.createFile(request.body, eff) == ERROR)
 		return file.response;
 	
 	file.response.createResponse(200, "File Created");
 	return file.response;
 }
 		
-int File::getFileName(const std::string& uri) {
-    const std::string directory = "/upload/";
-
-    // Must start with "/upload/"
-    if (uri.compare(0, directory.size(), directory) != 0) {
-		response.createResponse(404, "File must be posted to: /upload/*filename*");
-        return ERROR;
-	}
-
-    // Extract filename after "/upload/"
-    fileName = uri.substr(directory.size());
-
-    // Filename must not be empty
-    if (fileName.empty()) {
-		response.createResponse(400, "A Filename should be mentioned in the uri: '/upload/*filename*'");
-        return ERROR;
-	}
-
-    // Filename must not contain '/'
-    if (fileName.find('/') != std::string::npos) {
-		response.createResponse(400, "Filename should not contain '/' char");
-        return ERROR;
-	}
-
-    return SUCCESS;
-}
-
-int File::createFile(const std::string& body) {
-	if (body.size() != length) {
-		response.createResponse(400 , "Mismatch between request: Body size/Content-Length");
-		return ERROR;
-	}
-	filePath = generateUniqueFilename();
-	std::ofstream outFile(filePath.c_str(), std::ios::binary);
-	if (!outFile) {
-		response.createResponse(500, "Outfile Could not be Opened");
-		return ERROR;
-	}
-	
-	outFile.write(body.data(), body.size());
-	if (!outFile) {
-		response.createResponse(500, "Error during: Write to File");
-		return ERROR;
-	}
-	
-	outFile.close();
-	if (!outFile) {
-		response.createResponse(500, "Error while attempting to close the file ");
-		return ERROR;
-	}
-	return SUCCESS;
-}
-
-bool File::fileExists(const std::string fullPath) const {
-	struct stat buffer;
-	return (stat(fullPath.c_str(), &buffer) == 0);
-}
-
-std::string File::generateUniqueFilename() {
-    std::string baseDir = "upload/";
-    std::string name = fileName;
-    std::string extension = "";
-
-    // Extract extension if present
-    size_t dotPos = fileName.find_last_of('.');
-    if (dotPos != std::string::npos) {
-        name = fileName.substr(0, dotPos);
-        extension = fileName.substr(dotPos);
-    }
-
-    std::string fullPath = baseDir + fileName;
-    int counter = 1;
-
-    // Check if file exists and append counter if needed
-    while (fileExists(fullPath)) {
-        std::ostringstream newName;
-        newName << baseDir << name << "_" << counter << extension;
-        fullPath = newName.str();
-        counter++;
-    }
-
-    return fullPath;
-}
 
 //////////////////////////////////////////////////////////
 //					DELETE METHOD						//
@@ -403,10 +306,13 @@ Response handleDelete(const Request& request, const EffectiveRoute& eff) {
 	if (checkRequestVersion(request.version, file.response) == ERROR)
 		return file.response;
 		
-	if (file.getFileName(request.uri) == ERROR)
+	if (file.getFileName(eff) == ERROR)
 		return file.response;
-		
-	file.filePath = "upload/" + file.fileName;
+	
+	if (eff.use_alias)
+		file.filePath = eff.alias + "/upload/" + file.fileName;
+	else
+		file.filePath = eff.root + "/upload/" + file.fileName;
 	
 	if (unlink(file.filePath.c_str()) != 0) { //Unlink is not read or write, errno is allowed
 		file.createDeleteResponse(errno);
@@ -456,21 +362,104 @@ void File::createDeleteResponse(const int err) {
 	}
 }
 
-
 //////////////////////////////////////////////////////////
-//					UTILS								//
+//					FILE MANAGMENT						//
 //////////////////////////////////////////////////////////
 
-bool isMethodAllowed(int method, std::set<std::string> allow_methods) {
-	switch (method) {
-		case 1: if (allow_methods.find("GET") == allow_methods.end()) return false;
-				else return true;
-		case 2: if (allow_methods.find("POST") == allow_methods.end()) return false;
-				else return true;
-		case 3: if (allow_methods.find("DELETE") == allow_methods.end()) return false;
-				else return true;
+int File::getFileName(const EffectiveRoute& eff) {
+	
+    std::string directory;
+	if (eff.use_alias)
+		directory = eff.alias + "/upload/";
+	else
+		directory = eff.root + "/upload/";
+
+    // Must start with "root/alias + /upload/"
+    if (eff.uri.compare(0, directory.size(), directory) != 0) {
+		response.createResponse(404, "File must be posted to: *root or alias*/upload/*filename*");
+        return ERROR;
 	}
-	return false;
+
+    // Extract filename after "/upload/"
+    fileName = eff.uri.substr(directory.size());
+
+    // Filename must not be empty
+    if (fileName.empty()) {
+		response.createResponse(400, "A Filename should be mentioned in the uri: '/upload/*filename*'");
+        return ERROR;
+	}
+
+    // Filename must not contain '/'
+    if (fileName.find('/') != std::string::npos) {
+		response.createResponse(400, "Filename should not contain '/' char");
+        return ERROR;
+	}
+
+    return SUCCESS;
+}
+
+int File::createFile(const std::string& body, const EffectiveRoute& eff) {
+	if (body.size() != length) {
+		response.createResponse(400 , "Mismatch between request: Body size/Content-Length");
+		return ERROR;
+	}
+	filePath = generateUniqueFilename(eff);
+	std::cout << "FilePath:\t" << filePath << std::endl;
+	
+	std::ofstream outFile(filePath.c_str(), std::ios::binary);
+	if (!outFile) {
+		response.createResponse(500, "Outfile Could not be Opened");
+		return ERROR;
+	}
+	
+	outFile.write(body.data(), body.size());
+	if (!outFile) {
+		response.createResponse(500, "Error during: Write to File");
+		return ERROR;
+	}
+	
+	outFile.close();
+	if (!outFile) {
+		response.createResponse(500, "Error while attempting to close the file ");
+		return ERROR;
+	}
+	return SUCCESS;
+}
+
+bool File::fileExists(const std::string fullPath) const {
+	struct stat buffer;
+	return (stat(fullPath.c_str(), &buffer) == 0);
+}
+
+std::string File::generateUniqueFilename(const EffectiveRoute& eff) {
+    std::string baseDir;
+	if (eff.use_alias)
+		baseDir = eff.alias + "/upload/";
+	else
+		baseDir = eff.root + "/upload/";
+		
+    std::string name = fileName;
+    std::string extension = "";
+
+    // Extract extension if present
+    size_t dotPos = fileName.find_last_of('.');
+    if (dotPos != std::string::npos) {
+        name = fileName.substr(0, dotPos);
+        extension = fileName.substr(dotPos);
+    }
+
+    std::string fullPath = baseDir + fileName;
+    int counter = 1;
+
+    // Check if file exists and append counter if needed
+    while (fileExists(fullPath)) {
+        std::ostringstream newName;
+        newName << baseDir << name << "_" << counter << extension;
+        fullPath = newName.str();
+        counter++;
+    }
+
+    return fullPath;
 }
 
 int File::getFileData(const Request& request) {
@@ -521,6 +510,23 @@ bool File::isValidContentLength(const std::string& contentLength) {
 		return ERROR;
 	return SUCCESS;	
 }
+
+//////////////////////////////////////////////////////////
+//					UTILS								//
+//////////////////////////////////////////////////////////
+
+bool isMethodAllowed(int method, std::set<std::string> allow_methods) {
+	switch (method) {
+		case 1: if (allow_methods.find("GET") == allow_methods.end()) return false;
+				else return true;
+		case 2: if (allow_methods.find("POST") == allow_methods.end()) return false;
+				else return true;
+		case 3: if (allow_methods.find("DELETE") == allow_methods.end()) return false;
+				else return true;
+	}
+	return false;
+}
+
 
 bool shouldConnectionBeClosed(const std::map<std::string, std::string>& headers) {
 	std::map<std::string,std::string>::const_iterator it = headers.find("connection"); 
@@ -573,6 +579,12 @@ void Response::createResponse(unsigned int code, const std::string& bodyText) {
     headers["Content-Length"] = toString<size_t>(body.size());
 
     // 3 - Connection handling
+	setClosingConnection();
+	if (isErrorStatusCode(statusCode))
+		setErrorPage();
+}
+
+void Response::setClosingConnection(void) {
     if (closingConnection) {
         headers["Connection"] = "close";
     } else {
@@ -594,6 +606,7 @@ void Response::createResponse(unsigned int code, const std::string& bodyText) {
         }
     }
 }
+	
 
 std::string getStatusMessage(int statusCode) {
 	switch(statusCode) {
@@ -623,6 +636,47 @@ void Response::setHeader(std::string header, std::string content) {
         	headers["Content-Length"] = content;
 	}
 	return ;
+}
+
+bool isErrorStatusCode(int statusCode) {
+	switch (statusCode)
+	{
+		case 400:
+		case 403:
+		case 404:
+		case 405:
+		case 411:
+		case 413:
+		case 414:
+		case 415:
+		case 423:
+		case 500:
+		case 505:
+			return true;
+	
+		default:
+			return false;
+	}
+	return true;
+}
+
+void Response::setErrorPage() {
+	headers["Content-Type"] = "text/html";
+	body = 	"<!DOCTYPE html>";
+	body +=	"<html>";
+	body +=	"<head><title>";
+	body += toString<int>(statusCode);
+	body += statusMessage;	
+	body += "</title></head>";
+	body +=	"<body>";
+	body +=	"<h1>";
+	body += toString<int>(statusCode);
+	body += statusMessage;	
+	body +=	"</h1>";
+	body +=	"</body>";
+	body +=	"</html>";
+	
+    headers["Content-Length"] = toString<size_t>(body.size());
 }
 
 /* 

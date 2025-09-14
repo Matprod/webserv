@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerConfig.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
+/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 20:07:43 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/11 15:59:25 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/14 11:14:25 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,8 +30,11 @@ static int is_valid_ipv4(const char *ip) {
 
 bool Config::parseServerDirective(const std::string& directive, const std::vector<std::string>& values, ServerConfig* srv) {
 	if (directive == "allow_methods") {
-		for (size_t i = 0; i < values.size(); ++i)
-			srv->allow_methods.insert(values[i]);
+		if (values.size() >= 1) {
+			for (size_t i = 0; i < values.size(); ++i)
+				srv->allow_methods.insert(values[i]);
+		} else
+			srv->allow_methods.insert("NONE");
 	} else if (directive == "autoindex" || directive == "directory_listing") {
 		if (values.size() != 1) {
 			std::cerr << "Invalid " << directive << " directive" << std::endl;

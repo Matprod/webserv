@@ -6,7 +6,7 @@
 /*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/10 14:20:55 by adebert           #+#    #+#             */
-/*   Updated: 2025/09/12 23:18:12 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/13 13:46:24 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -122,40 +122,38 @@ std::string joinPaths(const std::string& base, const std::string& suffix) {
 
 
 int EffectiveRoute::isValidPath(void) {
-	//std::cout << *this << std::endl;
+	std::string toCheck;
+
+	if (getMethod)
+		toCheck = uri;
+	else {
+    	size_t SlashPos = uri.find_last_of('/') + 1;
+		toCheck = uri.substr(0, SlashPos);
+	}
+	
+	std::cout << "URI CHECKED:" << toCheck << std::endl;
+	
 	
 	struct stat st;
-	if (stat(uri.c_str(), &st) != 0) {
-    	switch (errno) {
-    	    case ENOENT:   		
-				std::cout << "a" << std::endl;
-				return 404; // No such file or directory
-    	    case ENOTDIR:  		
-				std::cout << "b" << std::endl;
-				return 404; // Component of the path is not a dir
-    	    case EACCES:   		
-				std::cout << "c" << std::endl;
-				return 403; // Permission denied
-    	    case EPERM:   		
-				std::cout << "d" << std::endl;
-				return 403; // Operation not permitted
-			case ELOOP:			
-				std::cout << "e" << std::endl;
-				return 403;
-			case ENAMETOOLONG:	
-				std::cout << "f" << std::endl;
-				return 403;
-    	    default:       		
-				std::cout << "g" << std::endl;
-				return 500; // Unexpected server error
- 		   }
-	} 
+    if (::stat(toCheck.c_str(), &st) != 0) { //Checking Errno is allowed: stat is neither a read or write action
+        switch (errno) {
+            case ENOENT:      std::cout << "a\n"; return 404;
+            case ENOTDIR:     std::cout << "b\n"; return 404;
+            case EACCES:      std::cout << "c\n"; return 403;
+            case EPERM:       std::cout << "d\n"; return 403;
+            case ELOOP:       std::cout << "e\n"; return 403;
+            case ENAMETOOLONG:std::cout << "f\n"; return 403;
+            default:          std::cout << "g\n"; return 500;
+        }
+    }
+
+    isDir = S_ISDIR(st.st_mode) != 0;
+
+    if (isDir && getMethod) {
+        if (!uri.empty() && uri[uri.size() - 1] != '/')
+            uri += '/';
+    }	
 	
-	if (S_ISDIR(st.st_mode)) {
-		isDir = true;
-		if (uri.empty() || uri[uri.size() - 1] != '/')
-			uri += '/';
-	}
 	return PATH_OK;
 }
 
@@ -172,10 +170,8 @@ std::ostream &operator<<(std::ostream &o, const EffectiveRoute&i) {
             o << ", ";
         o << *it;
     }
-	o << (i.useLocation ? "yes" : "no") << "\n";
-/* 	if (i.useLocation && i.location)
-		o << "Location Path:\t" << i.location->path << "\n"; */
 	
+	o << "\nUse Location:\t\t" << (i.useLocation ? "yes" : "no") << "\n";
     o << std::endl;	
 
 	return o;

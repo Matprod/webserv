@@ -6,7 +6,7 @@
 /*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 13:58:27 by allan             #+#    #+#             */
-/*   Updated: 2025/09/12 22:20:30 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/14 11:56:46 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,6 +41,8 @@ struct Response {
 	std::string responseToString() const;
 	void createResponse(unsigned int code, const std::string& reason);
 	void setHeader(std::string header, std::string content);
+	void setClosingConnection(void);
+	void setErrorPage(void);
 };
 
 template <typename T>
@@ -59,12 +61,12 @@ struct File {
 
 	Response response;	
 	
-	int getFileName(const std::string& uri);
+	int getFileName(const EffectiveRoute& eff);
 	int getFileData(const Request& request);
 	bool isValidContentLength(const std::string& contentLength);
-	int createFile(const std::string& body);
+	int createFile(const std::string& body, const EffectiveRoute& eff);
 	bool fileExists(const std::string fullPath) const;
-	std::string generateUniqueFilename();
+	std::string generateUniqueFilename(const EffectiveRoute& eff);
 	void createDeleteResponse(const int err);
 	int checkContentType(const std::string &contentType) const;
 };
@@ -81,5 +83,6 @@ Response handleDelete(const Request& request, const EffectiveRoute& eff);
 std::string getStatusMessage(int statusCode);
 int checkRequestVersion(const std::string& version, Response& response);
 bool shouldConnectionBeClosed(const std::map<std::string, std::string>& headers);
+bool isErrorStatusCode(int statusCode);
 
 #endif

@@ -6,7 +6,7 @@
 /*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/10 14:16:15 by adebert           #+#    #+#             */
-/*   Updated: 2025/09/12 23:03:22 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/13 13:28:48 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@
 struct EffectiveRoute {
     const ServerConfig* server;
     const LocationConfig* location;     // may be NULL if no location matched (but you should always have "/")
+	bool getMethod;
 	bool useLocation;
     std::string root;              // resolved base dir (if using root)
     std::string alias;             // resolved alias (if using alias)

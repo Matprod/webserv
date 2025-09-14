@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   LocationConfig.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
+/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 20:16:00 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/10 14:44:11 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/14 11:15:15 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,8 +26,11 @@ void print_vector(const std::vector<std::string>& vec) {
 
 bool Config::parseLocationDirective(const std::string& directive, const std::vector<std::string>& values, LocationConfig* loc) {
 	if (directive == "allow_methods") {
-		for (size_t i = 0; i < values.size(); ++i)
-			loc->allow_methods.insert(values[i]);
+		if (values.size() >= 1) {
+			for (size_t i = 0; i < values.size(); ++i)
+				loc->allow_methods.insert(values[i]);
+		} else
+			loc->allow_methods.insert("NONE");
 	} else if (directive == "root") {
 		if (values.size() != 1) {
 			std::cerr << "Error: Invalid root directive" << std::endl;
