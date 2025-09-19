@@ -6,7 +6,7 @@
 /*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/22 17:45:56 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/12 22:41:35 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/19 16:33:41 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,4 +92,10 @@ bool isCGIRequest(const LocationConfig& loc, const std::string& uri) {
 	std::string extension = getFileExtension(uri);
 	return (!loc.cgi_extensions.empty() &&
 			loc.cgi_extensions.find(extension) != loc.cgi_extensions.end());
+}
+
+std::ostream &operator<<(std::ostream &o, const LocationConfig&i) {
+	o << "LOCATION:\n";
+	 o << i.path << std::endl;
+	return o;
 }

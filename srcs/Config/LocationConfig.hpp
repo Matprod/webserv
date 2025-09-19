@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   LocationConfig.hpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
+/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 20:15:57 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/11 14:44:48 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/19 16:24:20 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@
 
 
 class LocationConfig {// Need to be in canonical form ?
-public:
+	public:
 	std::set<std::string> allow_methods;
 	std::string root;
 	bool autoindex;
@@ -42,3 +42,5 @@ public:
 	LocationConfig& operator=(const LocationConfig& rhs);
 	virtual ~LocationConfig();
 };
+
+std::ostream &operator<<(std::ostream &o, const LocationConfig &i);

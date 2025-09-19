@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
+/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:42:06 by allan             #+#    #+#             */
-/*   Updated: 2025/09/11 15:37:33 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/19 20:35:17 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,7 +72,7 @@ int handle_client_request(int fd, std::vector<pollfd>& fds, int& i,
 			--i;
 		}
 		else
-			std::cout << "Connexion in keep alive" << std::endl;;
+			std::cout << "Connexion in keep alive" << std::endl;
 	}
 	else if (result == REQUEST_INCOMPLETE) {
 		//std::cout << "Incomplete request..\n";

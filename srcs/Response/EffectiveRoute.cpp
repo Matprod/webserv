@@ -6,13 +6,16 @@
 /*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/10 14:20:55 by adebert           #+#    #+#             */
-/*   Updated: 2025/09/13 13:46:24 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/19 16:47:33 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "EffectiveRoute.hpp"
 
 bool EffectiveRoute::createEffectiveRoute(const ServerConfig* srv, const LocationConfig* loc) {
+	std::cout << "USE LOCATION" << std::endl;	
+	std::cout << *loc << std::endl;	
+	
 	server = srv;
 	location = loc;
 	useLocation = true;
@@ -55,6 +58,7 @@ bool EffectiveRoute::createEffectiveRoute(const ServerConfig* srv, const Locatio
 }
 
 bool EffectiveRoute::createEffectiveRoute(const ServerConfig* srv) {
+	std::cout << "NO LOCATION" << std::endl;	
 	server = srv;
 	location = NULL;
 	useLocation = false;
@@ -131,23 +135,26 @@ int EffectiveRoute::isValidPath(void) {
 		toCheck = uri.substr(0, SlashPos);
 	}
 	
-	std::cout << "URI CHECKED:" << toCheck << std::endl;
+	std::cout << "URI CHECKED:\t" << toCheck << std::endl;
 	
 	
 	struct stat st;
     if (::stat(toCheck.c_str(), &st) != 0) { //Checking Errno is allowed: stat is neither a read or write action
         switch (errno) {
-            case ENOENT:      std::cout << "a\n"; return 404;
-            case ENOTDIR:     std::cout << "b\n"; return 404;
-            case EACCES:      std::cout << "c\n"; return 403;
-            case EPERM:       std::cout << "d\n"; return 403;
-            case ELOOP:       std::cout << "e\n"; return 403;
-            case ENAMETOOLONG:std::cout << "f\n"; return 403;
-            default:          std::cout << "g\n"; return 500;
+            case ENOENT:      	return 404;
+            case ENOTDIR:     	return 404;
+            case EACCES:      	return 403;
+            case EPERM:       	return 403;
+            case ELOOP:       	return 403;
+            case ENAMETOOLONG:	return 403;
+            default:          	return 500;
         }
     }
 
-    isDir = S_ISDIR(st.st_mode) != 0;
+	if (getMethod)
+    	isDir = S_ISDIR(st.st_mode) != 0;
+	else
+		isDir = false;
 
     if (isDir && getMethod) {
         if (!uri.empty() && uri[uri.size() - 1] != '/')

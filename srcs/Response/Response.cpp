@@ -6,46 +6,41 @@
 /*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:45:12 by allan             #+#    #+#             */
-/*   Updated: 2025/09/14 12:04:43 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/19 20:46:34 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Response.hpp"
 
 Response buildResponse(const Request& request, const std::vector<ServerConfig>& servers) {
+	std::cout << "\n\n\n--------------------------------------------\n" << std::endl;
+	std::cout << "NEW REQUEST:\n" << std::endl;
+	
 	Response res;
 	bool use_location = false;
 	
-	//std::cout << "REQUEST CONFIG\n" << *request.config << std::endl;
-	
-	std::cout << "A" << std::endl;
-	//Here I'm not sure if getMatchingServer and Locations are correct	
-/* 	ServerConfig* oldServer = getMatchingServer(request, servers, res);
-	if (!oldServer)
-		return res;
-	LocationConfig* loc = getMatchingLocation(request, *oldServer, res, use_location);
-	if (!loc)
-		return res;
-	if (handleRedirect(*loc, res))
-		return res;
-	if (isCGIRequest(*loc, request.uri))
-		return executeCGI(request, *loc, *oldServer); */
-	
-	//LocationConfig* loc = getMatchingLocation(request, request.config, res, use_location);
-	std::cout << "B" << std::endl;
-		
-	EffectiveRoute eff;
-/* 	if (use_location && eff.createEffectiveRoute(request.config, loc) == false) {
-		res.createResponse(500, "");
-		return res;
-	} else  */
-	eff.getMethod = request.method == "GET" ? true : false;
-
-	if (eff.createEffectiveRoute(request.config) == false) {
+	LocationConfig* loc = getMatchingLocation(request, request.config, res, use_location);
+	if (!loc) {
 		res.createResponse(500, "");
 		return res;
 	}
-	std::cout << "C" << std::endl;
+	
+	if (handleRedirect(*loc, res)) //REVERIFIER COMPORTEMENT
+		return res;
+		
+//Here I'm not sure if getMatchingServer 
+/* 	if (isCGIRequest(*loc, request.uri))
+		return executeCGI(request, *loc, request.config); */
+		
+	EffectiveRoute eff;
+	eff.getMethod = request.method == "GET" ? true : false;
+	if (use_location && eff.createEffectiveRoute(request.config, loc) == false) {
+		res.createResponse(500, "");
+		return res;
+	} else if (!use_location && eff.createEffectiveRoute(request.config) == false) {
+		res.createResponse(500, "");
+		return res;
+	}
 		
 	int result;
 	result = eff.createEffectivePath(request.uri);
@@ -53,7 +48,6 @@ Response buildResponse(const Request& request, const std::vector<ServerConfig>& 
 		res.createResponse(result, "");
 		return res;
 	}
-	std::cout << "D" << std::endl;
 
 	std::cout << eff << std::endl;
 
@@ -69,23 +63,15 @@ Response buildResponse(const Request& request, const std::vector<ServerConfig>& 
 	return res;
 }
 
-/* 
-1 - Add Sanitize Path before and after Effective Route/Path
-2 - Handle AutoIndex
-3 - Modify behavior of File (Check upload_path element in config)
-*/
-
 //////////////////////////////////////////////////////////
 //					GET METHOD							//
 //////////////////////////////////////////////////////////
 
 Response handleGet(const Request& request, EffectiveRoute& eff) {
-/*     File file; */
 	Response response;
 	eff.closeConnection = shouldConnectionBeClosed(request.headers);
     response.closingConnection = eff.closeConnection;
 
-    // Check HTTP version
     if (checkRequestVersion(request.version, response) == ERROR)
 		return response;
 	
@@ -127,19 +113,16 @@ Response handleIndex(const EffectiveRoute& eff) {
 	
 	std::string index_path = eff.uri + "index.html";
 	
-	std::cout << "1" << std::endl;
 	int fd = open(index_path.c_str(), O_RDONLY);
 	if (fd < 0) { // Checking Errno is allowed here: open is neither a write or read action
     	switch (errno) {
     	    case ENOENT:
-				std::cout << "2" << std::endl;
 				return handleAutoIndex(eff);
 			
     	    case EACCES:   	
     	    case EPERM:   		
 			case ELOOP:		
 			case ENAMETOOLONG:
-				std::cout << "3" << std::endl;
 				response.createResponse(403, "");
 				return response;
 				
@@ -148,7 +131,6 @@ Response handleIndex(const EffectiveRoute& eff) {
 				return response;
 		}
 	}
-	std::cout << "5" << std::endl;
 	
 	struct stat st;
 	if (stat(index_path.c_str(), &st) != 0) {
