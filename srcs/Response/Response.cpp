@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "Response.hpp"
+#include "../Cgi/CgiExecutor.hpp"
 
 Response buildResponse(const Request& request, const std::vector<ServerConfig>& servers) {
 	std::cout << "\n\n\n--------------------------------------------\n" << std::endl;
@@ -29,8 +30,8 @@ Response buildResponse(const Request& request, const std::vector<ServerConfig>& 
 		return res; */
 		
 //Here I'm not sure if getMatchingServer 
-/* 	if (isCGIRequest(*loc, request.uri))
-		return executeCGI(request, *loc, request.config); */
+	if (isCGIRequest(*loc, request.uri))
+		return executeCGI(request, *loc, *request.config);
 		
 	EffectiveRoute eff;
 	eff.getMethod = request.method == "GET" ? true : false;

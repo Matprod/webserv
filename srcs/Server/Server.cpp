@@ -105,6 +105,8 @@ int serverLoop(const std::vector<ServerConfig>& servers) {
 						continue;
 					}
 				}
+				// Réinitialiser les événements après traitement
+				fds[i].revents = 0;
 			}
 		}
 	}

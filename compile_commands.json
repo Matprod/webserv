@@ -1,0 +1,73 @@
+[
+  {
+    "directory": "/home/matprod/mat_branch",
+    "command": "g++ -Wall -Wextra -std=c++98 -I include -c srcs/main.cpp -o srcs/main.o",
+    "file": "srcs/main.cpp"
+  },
+  {
+    "directory": "/home/matprod/mat_branch",
+    "command": "g++ -Wall -Wextra -std=c++98 -I include -c srcs/Config/Config.cpp -o srcs/Config/Config.o",
+    "file": "srcs/Config/Config.cpp"
+  },
+  {
+    "directory": "/home/matprod/mat_branch",
+    "command": "g++ -Wall -Wextra -std=c++98 -I include -c srcs/Server/Socket.cpp -o srcs/Server/Socket.o",
+    "file": "srcs/Server/Socket.cpp"
+  },
+  {
+    "directory": "/home/matprod/mat_branch",
+    "command": "g++ -Wall -Wextra -std=c++98 -I include -c srcs/Server/Server.cpp -o srcs/Server/Server.o",
+    "file": "srcs/Server/Server.cpp"
+  },
+  {
+    "directory": "/home/matprod/mat_branch",
+    "command": "g++ -Wall -Wextra -std=c++98 -I include -c srcs/Server/Client.cpp -o srcs/Server/Client.o",
+    "file": "srcs/Server/Client.cpp"
+  },
+  {
+    "directory": "/home/matprod/mat_branch",
+    "command": "g++ -Wall -Wextra -std=c++98 -I include -c srcs/Request/Request.cpp -o srcs/Request/Request.o",
+    "file": "srcs/Request/Request.cpp"
+  },
+  {
+    "directory": "/home/matprod/mat_branch",
+    "command": "g++ -Wall -Wextra -std=c++98 -I include -c srcs/Request/RequestBody.cpp -o srcs/Request/RequestBody.o",
+    "file": "srcs/Request/RequestBody.cpp"
+  },
+  {
+    "directory": "/home/matprod/mat_branch",
+    "command": "g++ -Wall -Wextra -std=c++98 -I include -c srcs/Response/Response.cpp -o srcs/Response/Response.o",
+    "file": "srcs/Response/Response.cpp"
+  },
+  {
+    "directory": "/home/matprod/mat_branch",
+    "command": "g++ -Wall -Wextra -std=c++98 -I include -c srcs/Response/ResponseUtils.cpp -o srcs/Response/ResponseUtils.o",
+    "file": "srcs/Response/ResponseUtils.cpp"
+  },
+  {
+    "directory": "/home/matprod/mat_branch",
+    "command": "g++ -Wall -Wextra -std=c++98 -I include -c srcs/Response/EffectiveRoute.cpp -o srcs/Response/EffectiveRoute.o",
+    "file": "srcs/Response/EffectiveRoute.cpp"
+  },
+  {
+    "directory": "/home/matprod/mat_branch",
+    "command": "g++ -Wall -Wextra -std=c++98 -I include -c srcs/Config/ServerConfig.cpp -o srcs/Config/ServerConfig.o",
+    "file": "srcs/Config/ServerConfig.cpp"
+  },
+  {
+    "directory": "/home/matprod/mat_branch",
+    "command": "g++ -Wall -Wextra -std=c++98 -I include -c srcs/Config/LocationConfig.cpp -o srcs/Config/LocationConfig.o",
+    "file": "srcs/Config/LocationConfig.cpp"
+  },
+  {
+    "directory": "/home/matprod/mat_branch",
+    "command": "g++ -Wall -Wextra -std=c++98 -I include -c srcs/Config/ConfigParser.cpp -o srcs/Config/ConfigParser.o",
+    "file": "srcs/Config/ConfigParser.cpp"
+  },
+  {
+    "directory": "/home/matprod/mat_branch",
+    "command": "g++ -Wall -Wextra -std=c++98 -I include -c srcs/Cgi/CgiExecutor.cpp -o srcs/Cgi/CgiExecutor.o",
+    "file": "srcs/Cgi/CgiExecutor.cpp"
+  }
+]
+
