@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
+/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:29:23 by allan             #+#    #+#             */
-/*   Updated: 2025/09/11 16:11:34 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/20 14:43:06 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,11 +35,12 @@ void check_timeouts(std::vector<pollfd>& fds,
 	time_t now = time(NULL);
 	for (size_t i = 0; i < fds.size(); ) {
 		int fd = fds[i].fd;
-		if (!isServerFd[fd]) {
-			if (now - lastActivity[fd] > CLIENT_TIMEOUT) {
-				std::cout << "Client " << fd << " inactif, fermeture.\n";
-				close_client(fd, fds, isServerFd, clientBuffers, lastActivity, clientFdToServerConfig);
-				continue;
+		if (isServerFd.find(fd) != isServerFd.end() && !isServerFd[fd]) {
+			std::map<int, time_t>::iterator it = lastActivity.find(fd);
+            if (it != lastActivity.end() && now - it->second > CLIENT_TIMEOUT) {
+                std::cout << "Client " << fd << " inactive, closing.\n";
+                close_client(fd, fds, isServerFd, clientBuffers, lastActivity, clientFdToServerConfig);
+                continue;
 			}
 		}
 		++i;

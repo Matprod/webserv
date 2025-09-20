@@ -6,7 +6,7 @@
 /*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/08 13:55:38 by allan             #+#    #+#             */
-/*   Updated: 2025/07/15 13:58:58 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/20 15:01:49 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,17 @@ void setupSockets(std::vector<ServerConfig>& config) {
 		}
 		std::cout << "\tSocket Securized" << std::endl;
 		
-		//STEP 3: Prepare a Snippet for IPV4 Address Socket
+		//STEP 3: Set listening socket to Non Blocking
+		int fdStatusFlag = fcntl(socketFd, F_GETFL, 0);
+		if (fdStatusFlag == -1 || fcntl(socketFd, F_SETFL, fdStatusFlag | O_NONBLOCK) == -1) { //Add Non Blocking Flag
+		    perror("fcntl O_NONBLOCK (listener)");
+		    close(socketFd);
+		    continue;
+		}
+		int fdDescriptorFlag = fcntl(socketFd, F_GETFD, 0);
+		if (fdDescriptorFlag != -1) fcntl(socketFd, F_SETFD, fdDescriptorFlag | FD_CLOEXEC); //Add close on exit Flag
+		
+		//STEP 4: Prepare a Snippet for IPV4 Address Socket
 		struct sockaddr_in addrIpv4;
 		memset(&addrIpv4, 0, sizeof(addrIpv4)); 	//Initialize the struct to 0
 		addrIpv4.sin_family = AF_INET; 				//Precise the address type: AF_INET == IPV4
@@ -39,7 +49,7 @@ void setupSockets(std::vector<ServerConfig>& config) {
 		addrIpv4.sin_addr.s_addr = INADDR_ANY;  	//INADDR_ANY == Can bind to any available network Interface
 
 		
-		//STEP 4: Binds our Socket to a Port (IPV4 Address)
+		//STEP 5: Binds our Socket to a Port (IPV4 Address)
 		if (bind(socketFd, (struct sockaddr*)&addrIpv4, sizeof(addrIpv4)) < 0) {
 			std::cerr << "Error: Socket Binding Failed\n" << std::endl;
 			close(socketFd);
@@ -47,8 +57,8 @@ void setupSockets(std::vector<ServerConfig>& config) {
 		}
 		std::cout << "\tSocket Bounded to port: " << it->port << std::endl;
 
-		//STEP 5: Start Listening (Mark a socket as passive, ready to accept incoming TCP connections), SOMAXCON = Max Number of pending connection request allowed
-		if (listen(socketFd, SOMAXCONN) < 0) {
+		//STEP 6: Start Listening (Mark a socket as passive, ready to accept incoming TCP connections), SOMAXCON = Max Number of pending connection request allowed
+		if (listen(socketFd, 1024) < 0) { //SOMAXCONN
 			std::cerr << "Error: Listen Setup Failed\n" << std::endl;
 			close(socketFd);
 			continue;

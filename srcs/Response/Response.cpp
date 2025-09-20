@@ -6,7 +6,7 @@
 /*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:45:12 by allan             #+#    #+#             */
-/*   Updated: 2025/09/19 20:46:34 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/20 15:43:55 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,13 +20,13 @@ Response buildResponse(const Request& request, const std::vector<ServerConfig>& 
 	bool use_location = false;
 	
 	LocationConfig* loc = getMatchingLocation(request, request.config, res, use_location);
-	if (!loc) {
+/* 	if (!loc) {
 		res.createResponse(500, "");
+		std::cout << "HERE" << std::endl;	
 		return res;
-	}
-	
-	if (handleRedirect(*loc, res)) //REVERIFIER COMPORTEMENT
-		return res;
+	} */
+/* 	if (handleRedirect(*loc, res)) //REVERIFIER COMPORTEMENT
+		return res; */
 		
 //Here I'm not sure if getMatchingServer 
 /* 	if (isCGIRequest(*loc, request.uri))
@@ -34,11 +34,14 @@ Response buildResponse(const Request& request, const std::vector<ServerConfig>& 
 		
 	EffectiveRoute eff;
 	eff.getMethod = request.method == "GET" ? true : false;
+	eff.closeConnection = request.closeConnection;
 	if (use_location && eff.createEffectiveRoute(request.config, loc) == false) {
 		res.createResponse(500, "");
+		std::cout << "HERE 2" << std::endl;	
 		return res;
 	} else if (!use_location && eff.createEffectiveRoute(request.config) == false) {
 		res.createResponse(500, "");
+		std::cout << "HERE 3" << std::endl;	
 		return res;
 	}
 		
@@ -46,6 +49,7 @@ Response buildResponse(const Request& request, const std::vector<ServerConfig>& 
 	result = eff.createEffectivePath(request.uri);
 	if (result != PATH_OK) {
 		res.createResponse(result, "");
+		std::cout << "HERE 4" << std::endl;	
 		return res;
 	}
 
@@ -69,7 +73,6 @@ Response buildResponse(const Request& request, const std::vector<ServerConfig>& 
 
 Response handleGet(const Request& request, EffectiveRoute& eff) {
 	Response response;
-	eff.closeConnection = shouldConnectionBeClosed(request.headers);
     response.closingConnection = eff.closeConnection;
 
     if (checkRequestVersion(request.version, response) == ERROR)
@@ -101,8 +104,7 @@ Response handleGet(const Request& request, EffectiveRoute& eff) {
     response.body = content;
     response.headers["Content-Length"] = toString<size_t>(content.size());
     response.headers["Content-Type"] = "application/octet-stream";
-    if (response.closingConnection)
-        response.headers["Connection"] = "close";
+    response.headers["Connection"] = (eff.closeConnection ? "close" : "keep-alive");
 
     return response;
 }
@@ -152,6 +154,7 @@ Response createIndexResponse(int fd, bool closeConnection) {
 	response.statusCode = 200;
 	response.statusMessage = getStatusMessage(200);
 	response.setHeader("Content-Type", "text/html");
+    response.headers["Connection"] = (closeConnection ? "close" : "keep-alive");
 	
 
 	const size_t BUFSZ = 64 * 1024;
@@ -243,6 +246,7 @@ Response createAutoIndexResponse(const EffectiveRoute& eff) {
 	response.statusMessage = getStatusMessage(200);
 	response.setHeader("Content-Type", "text/html");
     response.headers["Content-Length"] = toString<size_t>(response.body.size());
+    response.headers["Connection"] = (eff.closeConnection ? "close" : "keep-alive");
 	
 	return response;
 }
@@ -583,7 +587,7 @@ void Response::setClosingConnection(void) {
                 break;
             default:
                 // keep-alive by default in HTTPS/1.1
-                headers.erase("Connection");
+                headers["Connection"] = "keep alive";
                 break;
         }
     }

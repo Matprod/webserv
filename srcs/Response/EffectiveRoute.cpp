@@ -6,7 +6,7 @@
 /*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/10 14:20:55 by adebert           #+#    #+#             */
-/*   Updated: 2025/09/19 16:47:33 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/20 15:39:50 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,6 @@ bool EffectiveRoute::createEffectiveRoute(const ServerConfig* srv, const Locatio
 	location_prefix = loc->path;
 	redirect_status = loc->redirect_status;
 	redirect_url = loc->redirect_url;
-	closeConnection = false;
 	
 	return true;
 }
@@ -179,6 +178,7 @@ std::ostream &operator<<(std::ostream &o, const EffectiveRoute&i) {
     }
 	
 	o << "\nUse Location:\t\t" << (i.useLocation ? "yes" : "no") << "\n";
+	o << "Close Connection:\t" << (i.closeConnection ? "yes" : "no") << "\n";
     o << std::endl;	
 
 	return o;
