@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerConfig.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
+/*   By: mvoisin <mvoisin@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 20:07:43 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/21 17:10:00 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/21 17:14:47 by mvoisin          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -167,15 +167,16 @@ ServerConfig::ServerConfig(const ServerConfig& src)
 	, locations(src.locations)
 	, index(src.index)
 	, allow_methods(src.allow_methods)
-	, socketFd(src.socketFd)
+	, socketFd(0) // Ne jamais copier le fd
 	, has_root(src.has_root)
 	, autoindex(src.autoindex)
 {
+	// On s'assure que tous les containers sont bien copiés
 }
 
 ServerConfig::~ServerConfig() {
 	if (socketFd > 0)
-		close (socketFd);
+		close(socketFd);
 }
 
 ServerConfig& ServerConfig::operator=(const ServerConfig& rhs) {
@@ -189,7 +190,7 @@ ServerConfig& ServerConfig::operator=(const ServerConfig& rhs) {
 		locations = rhs.locations;
 		index = rhs.index;
 		allow_methods = rhs.allow_methods;
-		socketFd = rhs.socketFd;
+		socketFd = 0; // Ne jamais copier le fd
 		has_root = rhs.has_root;
 		autoindex = rhs.autoindex;
 	}

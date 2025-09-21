@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   LocationConfig.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
+/*   By: mvoisin <mvoisin@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 20:16:00 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/21 16:54:10 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/21 17:24:58 by mvoisin          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -106,8 +106,11 @@ bool Config::parseLocationDirective(const std::string& directive, const std::vec
 }
 
 LocationConfig::LocationConfig()
-	: root("")
+	: allow_methods()
+	, root("")
 	, autoindex(false)
+	, index()
+	, cgi_extensions()
 	, upload_path("")
 	, path("")
 	, redirect_status(0)
@@ -116,13 +119,41 @@ LocationConfig::LocationConfig()
 	, has_root(false)
 	, has_alias(false)
 {
-	allow_methods.clear();
-	cgi_extensions.clear();
-	index.clear();
+	// Tous les containers sont initialisés
+}
+
+LocationConfig::LocationConfig(const LocationConfig& src)
+	: allow_methods(src.allow_methods)
+	, root(src.root)
+	, autoindex(src.autoindex)
+	, index(src.index)
+	, cgi_extensions(src.cgi_extensions)
+	, upload_path(src.upload_path)
+	, path(src.path)
+	, redirect_status(src.redirect_status)
+	, redirect_url(src.redirect_url)
+	, alias(src.alias)
+	, has_root(src.has_root)
+	, has_alias(src.has_alias)
+{
+}
+
+LocationConfig& LocationConfig::operator=(const LocationConfig& rhs) {
+	if (this != &rhs) {
+		allow_methods = rhs.allow_methods;
+		root = rhs.root;
+		autoindex = rhs.autoindex;
+		index = rhs.index;
+		cgi_extensions = rhs.cgi_extensions;
+		upload_path = rhs.upload_path;
+		path = rhs.path;
+		redirect_status = rhs.redirect_status;
+		redirect_url = rhs.redirect_url;
+		alias = rhs.alias;
+		has_root = rhs.has_root;
+		has_alias = rhs.has_alias;
+	}
+	return *this;
 }
 
 LocationConfig::~LocationConfig() {}
-
-LocationConfig::LocationConfig(const LocationConfig& src) {
-	*this = src;
-}

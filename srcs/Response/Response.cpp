@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
+/*   By: mvoisin <mvoisin@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:45:12 by allan             #+#    #+#             */
-/*   Updated: 2025/09/21 16:55:52 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/21 17:35:29 by mvoisin          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,8 @@ Response buildResponse(const Request& request, const std::vector<ServerConfig>& 
 	bool use_location = false;
 	
 	LocationConfig* loc = getMatchingLocation(request, request.config, res, use_location);
+	if (!loc)
+    	return res;
 	
 	if (isCGIRequest(*loc, request.uri))
 		return executeCGI(request, *loc, *request.config);

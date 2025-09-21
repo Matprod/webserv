@@ -3,36 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   Config.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
+/*   By: mvoisin <mvoisin@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/22 11:00:25 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/21 16:54:21 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/21 17:26:57 by mvoisin          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Config.hpp"
 
-LocationConfig& LocationConfig::operator=(const LocationConfig& rhs) {
-	if (this != &rhs) {
-		this->root = rhs.root;
-		this->alias = rhs.alias;
-		this->has_alias = rhs.has_alias;
-		this->has_root = rhs.has_root;
-		this->allow_methods = rhs.allow_methods;
-		this->autoindex = rhs.autoindex;
-		
-		this->path = rhs.path;
-		this->upload_path = rhs.upload_path;
-		this->cgi_extensions = rhs.cgi_extensions;
-		this->index = rhs.index;
-		this->redirect_status = rhs.redirect_status;
-		this->redirect_url = rhs.redirect_url;
-	}	
-	
-	return *this;
-}
-
-
+// Suppression de la définition de LocationConfig::operator= dans ce fichier (déjà définie dans LocationConfig.cpp)
 
 Config::Config(const std::string& path) {
 	this->error = 0;
