@@ -49,6 +49,7 @@
 
 #include "../srcs/Config/Config.hpp"
 #include "Defines.hpp"
+#include "../srcs/Utils/Signal.hpp"
  // #include "Logger.hpp"
 // #include "ArgsManager.hpp"
  // #include "Utils.hpp"

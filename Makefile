@@ -17,6 +17,7 @@ SRCS = 	srcs/main.cpp \
 		srcs/Config/LocationConfig.cpp \
 		srcs/Config/ConfigParser.cpp \
 		srcs/Cgi/CgiExecutor.cpp \
+		srcs/Utils/Signal.cpp
 		
 OBJS = $(SRCS:.cpp=.o)
 

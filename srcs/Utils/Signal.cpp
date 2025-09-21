@@ -1,16 +1,23 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ConfigParser.hpp                                   :+:      :+:    :+:   */
+/*   Signal.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
+/*   By: mvoisin <mvoisin@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/07/12 20:17:03 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/21 17:05:46 by adebert          ###   ########.fr       */
+/*   Created: 2025/09/21 14:45:21 by mvoisin           #+#    #+#             */
+/*   Updated: 2025/09/21 14:55:17 by mvoisin          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#pragma once
+#include "Signal.hpp"
 
-#include "Config.hpp"
-#include "ServerConfig.hpp"
+volatile sig_atomic_t g_stop = 0;
+
+void signalHandler(int sig) {
+    if (sig == SIGINT) {
+        std::cout << "\n[Signal] Caught CTRL+C (SIGINT)" << std::endl;
+        g_stop = 1;
+    }
+}
+

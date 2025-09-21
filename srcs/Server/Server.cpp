@@ -6,7 +6,7 @@
 /*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:29:23 by allan             #+#    #+#             */
-/*   Updated: 2025/09/21 16:10:04 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/21 16:59:34 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 void setup_pollfds(const std::vector<ServerConfig>& servers, std::vector<pollfd>& fds, std::map<int, bool>& isServerFd, std::map<int, const ServerConfig*> &pollFdToServerConfig) {
 	for (size_t i = 0; i < servers.size(); ++i) {
 		if (servers[i].socketFd >= 0) {
-			pollfd pfd;
+			pollfd pfd = {};
 			pfd.fd = servers[i].socketFd;
 			pfd.events = POLLIN;
 			pfd.revents = 0;
@@ -57,7 +57,7 @@ int serverLoop(const std::vector<ServerConfig>& servers) {
 
 	setup_pollfds(servers, fds, isServerFd, pollFdToServerConfig);
 
-	while (true) {
+	while (true && !g_stop) {
 		check_timeouts(fds, lastActivity, clientBuffers, isServerFd, clientFdToServerConfig);
 
 		int ready = poll(fds.data(), fds.size(), -1);
@@ -106,6 +106,13 @@ int serverLoop(const std::vector<ServerConfig>& servers) {
 					}
 				}
 			}
+		}
+		if (g_stop) {
+			std::cout << "Arrêt du serveur, fermeture des sockets... ligne " << __LINE__ << std::endl;
+			for (size_t i = 0; i < fds.size(); ++i) {
+				close(fds[i].fd);
+			}
+			fds.clear();
 		}
 	}
 }

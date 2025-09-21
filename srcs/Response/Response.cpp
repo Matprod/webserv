@@ -6,7 +6,7 @@
 /*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:45:12 by allan             #+#    #+#             */
-/*   Updated: 2025/09/21 14:50:32 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/21 16:55:52 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,9 @@ Response buildResponse(const Request& request, const std::vector<ServerConfig>& 
 	bool use_location = false;
 	
 	LocationConfig* loc = getMatchingLocation(request, request.config, res, use_location);
+	
+	if (isCGIRequest(*loc, request.uri))
+		return executeCGI(request, *loc, *request.config);
 	
 	EffectiveRoute eff;
 	eff.getMethod = request.method == "GET" ? true : false;
@@ -707,6 +710,12 @@ void Response::setDefaultErrorPage() {
 	body +=	"</html>";
 	
     headers["Content-Length"] = toString<size_t>(body.size());
+}
+
+Response::Response()
+	: closingConnection(false), statusCode(0), statusMessage(""), version("HTTP/1.1"), body("")
+{
+	headers.clear();
 }
 
 /* 

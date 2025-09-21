@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   LocationConfig.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
+/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 20:16:00 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/14 11:15:15 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/21 16:54:10 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -103,4 +103,26 @@ bool Config::parseLocationDirective(const std::string& directive, const std::vec
 		return ERROR;
 	}
 	return 0;
+}
+
+LocationConfig::LocationConfig()
+	: root("")
+	, autoindex(false)
+	, upload_path("")
+	, path("")
+	, redirect_status(0)
+	, redirect_url("")
+	, alias("")
+	, has_root(false)
+	, has_alias(false)
+{
+	allow_methods.clear();
+	cgi_extensions.clear();
+	index.clear();
+}
+
+LocationConfig::~LocationConfig() {}
+
+LocationConfig::LocationConfig(const LocationConfig& src) {
+	*this = src;
 }

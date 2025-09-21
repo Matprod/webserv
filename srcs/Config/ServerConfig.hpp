@@ -6,7 +6,7 @@
 /*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 20:09:14 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/11 16:00:07 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/21 17:05:10 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,9 @@ public:
 	int ServerLoop(const std::vector<ServerConfig>& servers); 
 	
 	ServerConfig();
+	ServerConfig(const ServerConfig& src);
 	virtual ~ServerConfig();
+	ServerConfig& operator=(const ServerConfig& rhs);
 };
 
 std::ostream &operator<<(std::ostream &o, const ServerConfig&i);

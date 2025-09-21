@@ -6,7 +6,7 @@
 /*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 13:58:27 by allan             #+#    #+#             */
-/*   Updated: 2025/09/21 12:30:08 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/21 16:56:15 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,7 @@ struct Response {
 	std::string body;	
 	bool closingConnection;
 
+	Response();
 	std::string responseToString() const;
 	void createResponse(unsigned int code, const std::string& bodyText, std::map<int, std::string> error_pages);
 	void setHeader(std::string header, std::string content);
