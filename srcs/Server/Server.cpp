@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
+/*   By: mvoisin <mvoisin@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:29:23 by allan             #+#    #+#             */
-/*   Updated: 2025/09/20 14:43:06 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/21 15:45:27 by mvoisin          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,7 +57,7 @@ int serverLoop(const std::vector<ServerConfig>& servers) {
 
 	setup_pollfds(servers, fds, isServerFd, pollFdToServerConfig);
 
-	while (true) {
+	while (true && !g_stop) {
 		check_timeouts(fds, lastActivity, clientBuffers, isServerFd, clientFdToServerConfig);
 
 		int ready = poll(fds.data(), fds.size(), -1);
@@ -86,7 +86,9 @@ int serverLoop(const std::vector<ServerConfig>& servers) {
 				 	int parse_status = handle_client_request(fds[i].fd, fds, i, isServerFd, clientBuffers, lastActivity, req, clientFdToServerConfig);
 					//std::cout << "REQUEST AFTER PARSER:\n" << req << std::endl;
 					if (parse_status == REQUEST_OK) {
-						Response res = buildResponse(req, servers);
+						Response res;
+						res.closingConnection = true;
+						res = buildResponse(req, servers);
 						std::string rawResponse = res.responseToString();
 						std::cout << "RESPONSE:\n" << rawResponse << std::endl;
 						send(fds[i].fd, rawResponse.c_str(), rawResponse.size(), 0);
@@ -108,6 +110,14 @@ int serverLoop(const std::vector<ServerConfig>& servers) {
 				// Réinitialiser les événements après traitement
 				fds[i].revents = 0;
 			}
+		}
+		// Nettoyage des fd lors de l'arrêt par signal
+		if (g_stop) {
+			std::cout << "Arrêt du serveur, fermeture des sockets..." << std::endl;
+			for (size_t i = 0; i < fds.size(); ++i) {
+				close(fds[i].fd);
+			}
+			fds.clear();
 		}
 	}
 }

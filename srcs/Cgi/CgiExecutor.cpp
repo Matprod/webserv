@@ -139,19 +139,15 @@ void parseCgiResponse(const std::string& cgiOutput, Response& res) {
 
 		if (line.empty()) break;
 
-		// Chercher le séparateur ':'
 		size_t colon_pos = line.find(':');
 		if (colon_pos == std::string::npos) continue;
 
 		std::string key = line.substr(0, colon_pos);
 		std::string value = line.substr(colon_pos + 1);
 		
-		// Supprimer les espaces en début de valeur
 		value.erase(0, value.find_first_not_of(" \t"));
 
-		// Traiter le header Status spécial
 		if (to_lower(key) == "status") {
-			// Format: "Status: 200 OK" ou "Status: 200"
 			std::istringstream status_stream(value);
 			std::string status_code_str;
 			status_stream >> status_code_str;
@@ -159,7 +155,6 @@ void parseCgiResponse(const std::string& cgiOutput, Response& res) {
 			int status_code = atoi(status_code_str.c_str());
 			if (status_code >= 100 && status_code < 600) {
 				res.statusCode = status_code;
-				// Extraire le message de statut si présent
 				std::string status_message;
 				if (std::getline(status_stream, status_message)) {
 					status_message.erase(0, status_message.find_first_not_of(" \t"));
@@ -170,18 +165,15 @@ void parseCgiResponse(const std::string& cgiOutput, Response& res) {
 				status_set = true;
 			}
 		} else {
-			// Headers normaux
 			res.headers[key] = value;
 		}
 	}
 
-	// Si aucun status n'a été défini, utiliser 200 par défaut
 	if (!status_set) {
 		res.statusCode = 200;
 		res.statusMessage = getStatusMessage(200);
 	}
 
-	// Ajouter Content-Length si pas défini
 	if (res.headers.find("Content-Length") == res.headers.end()) {
 		res.headers["Content-Length"] = toString<size_t>(res.body.size());
 	}
@@ -191,7 +183,6 @@ Response executeCGI(const Request& req, const LocationConfig& loc, const ServerC
 	Response res;
 	res.version = "HTTP/1.1";
 
-	// Vérifier l'extension CGI
 	std::string extension = getFileExtension(req.uri);
 	if (loc.cgi_extensions.find(extension) == loc.cgi_extensions.end()) {
 		res.statusCode = 404;
@@ -202,11 +193,8 @@ Response executeCGI(const Request& req, const LocationConfig& loc, const ServerC
 		return res;
 	}
 
-	// Obtenir le programme CGI et construire le chemin du script
 	std::string cgiProgram = loc.cgi_extensions.at(extension);
 	std::string scriptName = getScriptName(req.uri);
-	
-	// Utiliser le root de la location s'il existe, sinon utiliser le root du serveur
 	std::string rootPath;
 	if (loc.has_root) {
 		rootPath = loc.root;

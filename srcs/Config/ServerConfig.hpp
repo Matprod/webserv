@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerConfig.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
+/*   By: mvoisin <mvoisin@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 20:09:14 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/11 16:00:07 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/21 15:47:46 by mvoisin          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,8 @@ public:
 	int ServerLoop(const std::vector<ServerConfig>& servers); 
 	
 	ServerConfig();
+	ServerConfig(const ServerConfig& src);
+	ServerConfig& operator=(const ServerConfig& rhs);
 	virtual ~ServerConfig();
 };
 

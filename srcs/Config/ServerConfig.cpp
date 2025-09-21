@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerConfig.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
+/*   By: mvoisin <mvoisin@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 20:07:43 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/14 11:14:25 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/21 15:48:11 by mvoisin          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -139,5 +139,55 @@ std::ostream &operator<<(std::ostream &o, const ServerConfig&i) {
 	<< i.root << std::endl
 	<< i.port << std::endl;
 	return o;	
+}
+
+ServerConfig::ServerConfig()
+	: port(8080)
+	, host("")
+	, root("")
+	, max_body_size(1048576)
+	, socketFd(0)
+	, has_root(false)
+	, autoindex(false)
+{
+	server_names.clear();
+	error_pages.clear();
+	locations.clear();
+	index.clear();
+	allow_methods.clear();
+}
+
+ServerConfig::ServerConfig(const ServerConfig& src)
+	: port(src.port)
+	, host(src.host)
+	, server_names(src.server_names)
+	, root(src.root)
+	, error_pages(src.error_pages)
+	, max_body_size(src.max_body_size)
+	, locations(src.locations)
+	, index(src.index)
+	, allow_methods(src.allow_methods)
+	, socketFd(src.socketFd)
+	, has_root(src.has_root)
+	, autoindex(src.autoindex)
+{
+}
+
+ServerConfig& ServerConfig::operator=(const ServerConfig& rhs) {
+	if (this != &rhs) {
+		port = rhs.port;
+		host = rhs.host;
+		server_names = rhs.server_names;
+		root = rhs.root;
+		error_pages = rhs.error_pages;
+		max_body_size = rhs.max_body_size;
+		locations = rhs.locations;
+		index = rhs.index;
+		allow_methods = rhs.allow_methods;
+		socketFd = rhs.socketFd;
+		has_root = rhs.has_root;
+		autoindex = rhs.autoindex;
+	}
+	return *this;
 }
 

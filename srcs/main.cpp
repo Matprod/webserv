@@ -10,7 +10,6 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <signal.h>
 #include "../includes/Webserv.hpp"
 #include "./Server/Socket.hpp"
 #include "./Server/Server.hpp"
@@ -85,6 +84,7 @@ bool printConfig(const Config& config) {
 
 int main(int argc, char *argv[]) {
 	signal(SIGPIPE, SIG_IGN);
+	signal(SIGINT, signalHandler);
 	std::string config_path = (argc > 1) ? argv[1] : "default.conf";
 	//STEP 1: Get/Parse Server Config Files
 	Config config(config_path);

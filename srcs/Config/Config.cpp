@@ -3,16 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   Config.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
+/*   By: mvoisin <mvoisin@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/22 11:00:25 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/11 16:48:19 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/21 15:45:27 by mvoisin          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Config.hpp"
 
-LocationConfig::LocationConfig() : autoindex(false), redirect_status(0), has_root(false), has_alias(false) {}
 LocationConfig::~LocationConfig() {}
 
 LocationConfig::LocationConfig(const LocationConfig& src) {
@@ -24,6 +23,7 @@ LocationConfig& LocationConfig::operator=(const LocationConfig& rhs) {
 		this->root = rhs.root;
 		this->alias = rhs.alias;
 		this->has_alias = rhs.has_alias;
+		this->has_root = rhs.has_root;
 		this->allow_methods = rhs.allow_methods;
 		this->autoindex = rhs.autoindex;
 		
@@ -38,7 +38,6 @@ LocationConfig& LocationConfig::operator=(const LocationConfig& rhs) {
 	return *this;
 }
 
-ServerConfig::ServerConfig() : port(8080), max_body_size(1048576), socketFd(0), has_root(false), autoindex(false){}
 
 ServerConfig::~ServerConfig() {
 	if (socketFd > 0)
