@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
+/*   By: mvoisin <mvoisin@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:45:12 by allan             #+#    #+#             */
-/*   Updated: 2025/09/20 15:43:55 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/21 16:14:10 by mvoisin          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -685,3 +685,9 @@ void Response::setErrorPage() {
 		POST → 201 Created, 200 OK, or 400 Bad Request
 		DELETE → 200 OK or 204 No Content
  */
+
+Response::Response()
+	: closingConnection(false), statusCode(0), statusMessage(""), version("HTTP/1.1"), body("")
+{
+	headers.clear();
+}

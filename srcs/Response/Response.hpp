@@ -38,6 +38,7 @@ struct Response {
 	std::string body;	
 	bool closingConnection;
 
+	Response();
 	std::string responseToString() const;
 	void createResponse(unsigned int code, const std::string& reason);
 	void setHeader(std::string header, std::string content);
