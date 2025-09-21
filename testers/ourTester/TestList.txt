@@ -40,21 +40,30 @@ III - Code Security and Cleaness:
 
 	B - Fd / Socket not Closed
 
-	C - Resilience / Pressure Test
+	C - Resilience / Pressure Test:
+		-> siege -b -c 30 -t 2m http://localhost:3434/ping.html		-	OK
+		-> siege -b -c 30 -t 20s http://127.0.0.1:3434/100kb.bin	-	OK
+		-> siege -b -c 30 -t 20s http://127.0.0.1:3434/1mb.bin		-	OK
+		-> siege -b -c 200 -t 30s http://127.0.0.1:3434/1mb.bin		-	OK
 
 	D - Edge Cases that might Segfault
 
 IV - Check Subject Requirements:
 
-	-> Server is Non-Blocking at all times:
+	-> Server is Non-Blocking at all times	- OK
 	-> Check Errno after read/write Not Allowed:
 	-> What are the use of the macro (FD_SET, FD_CLR...?)
-	-> Handle request Time out
-	-> Server is compatible with Google
-	-> Compare Behaviors with NGINX (Config Parsing, Status Code...)
-	-> Default Error Pages if none are provided: YES (But don't handle those provided);
+	-> Handle request Time out	- OK
+	-> Server is compatible with Google - OK
+	-> Compare Behaviors with NGINX (Config Parsing, Status Code...) - OK (GET)
+	-> Default Error Pages if none are provided: OK
 	-> Does our Server, serve a Fully static Website: YES 
+
 	-> The first server for a host:port will be the default for this host:port (meaning it
 		will respond to all requests that do not belong to another server).
 	-> How does Redirect work ?
+	-> Check Host Name + Multiple Ports
+	-> Config Index file (not just index.html)
+	
+
 

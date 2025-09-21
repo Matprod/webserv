@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ResponseUtils.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
+/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/22 17:45:56 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/19 16:33:41 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/21 12:36:49 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,15 +63,17 @@ std::string readChunkedBody(const std::string& rawData) {
 
 ServerConfig* getMatchingServer(const Request& req, const std::vector<ServerConfig>& servers, Response& res) {
 	ServerConfig* server = findMatchingServer(req, servers);
-	if (!server)
-		res.createResponse(400, "");
+	if (!server) {
+		std::map<int, std::string> empty_map;
+		res.createResponse(400, "", empty_map);
+	}
 	return server;
 }
 
 LocationConfig* getMatchingLocation(const Request& req, const ServerConfig* server, Response& res, bool &use_location) {
 	LocationConfig* loc = findMatchingLocation(req.uri, server->locations, use_location);
 	if (!loc)
-		res.createResponse(404, "");
+		res.createResponse(404, "", server->error_pages);
 	return loc;
 }
 

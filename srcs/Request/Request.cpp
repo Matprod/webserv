@@ -6,7 +6,7 @@
 /*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:44:20 by allan             #+#    #+#             */
-/*   Updated: 2025/09/10 10:49:55 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/21 16:10:41 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@ std::string to_lower(const std::string& str) {
 
 int read_socket(int socket, std::map<int, std::string>& buffers, std::map<int, time_t>& lastActivity) {
 	char buffer[4096];
-	int bytes_read = recv(socket, buffer, sizeof(buffer) - 1, 0);
+	int bytes_read = recv(socket, buffer, sizeof(buffer) - 1, 0); //THE ONLY RECV FOR THIS CLIENT
 	if (bytes_read <= 0) {
 		if (bytes_read < 0)
 			std::cerr << "Erreur lors de la lecture de la socket\n";

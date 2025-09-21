@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
+/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:29:23 by allan             #+#    #+#             */
-/*   Updated: 2025/09/20 14:43:06 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/21 16:10:04 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,7 +89,7 @@ int serverLoop(const std::vector<ServerConfig>& servers) {
 						Response res = buildResponse(req, servers);
 						std::string rawResponse = res.responseToString();
 						std::cout << "RESPONSE:\n" << rawResponse << std::endl;
-						send(fds[i].fd, rawResponse.c_str(), rawResponse.size(), 0);
+						send(fds[i].fd, rawResponse.c_str(), rawResponse.size(), 0); //THE ONLY SEND FOR EACH CLIENT
 						if (res.closingConnection == true) {
 							close_client(fds[i].fd, fds, isServerFd, clientBuffers, lastActivity, clientFdToServerConfig);
 							--i;

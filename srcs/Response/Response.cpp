@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
+/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:45:12 by allan             #+#    #+#             */
-/*   Updated: 2025/09/20 15:43:55 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/21 14:50:32 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,36 +20,22 @@ Response buildResponse(const Request& request, const std::vector<ServerConfig>& 
 	bool use_location = false;
 	
 	LocationConfig* loc = getMatchingLocation(request, request.config, res, use_location);
-/* 	if (!loc) {
-		res.createResponse(500, "");
-		std::cout << "HERE" << std::endl;	
-		return res;
-	} */
-/* 	if (handleRedirect(*loc, res)) //REVERIFIER COMPORTEMENT
-		return res; */
-		
-//Here I'm not sure if getMatchingServer 
-/* 	if (isCGIRequest(*loc, request.uri))
-		return executeCGI(request, *loc, request.config); */
-		
+	
 	EffectiveRoute eff;
 	eff.getMethod = request.method == "GET" ? true : false;
 	eff.closeConnection = request.closeConnection;
 	if (use_location && eff.createEffectiveRoute(request.config, loc) == false) {
-		res.createResponse(500, "");
-		std::cout << "HERE 2" << std::endl;	
+		res.createResponse(500, "", eff.server->error_pages);
 		return res;
 	} else if (!use_location && eff.createEffectiveRoute(request.config) == false) {
-		res.createResponse(500, "");
-		std::cout << "HERE 3" << std::endl;	
+		res.createResponse(500, "", eff.server->error_pages);
 		return res;
 	}
 		
 	int result;
 	result = eff.createEffectivePath(request.uri);
 	if (result != PATH_OK) {
-		res.createResponse(result, "");
-		std::cout << "HERE 4" << std::endl;	
+		res.createResponse(result, "", eff.server->error_pages);
 		return res;
 	}
 
@@ -62,7 +48,7 @@ Response buildResponse(const Request& request, const std::vector<ServerConfig>& 
 	} else if (request.method == "DELETE" && isMethodAllowed(DELETE, eff.allow_methods)) {
 		return handleDelete(request, eff);
 	} else
-		res.createResponse(405, "");
+		res.createResponse(405, "", eff.server->error_pages);
 		
 	return res;
 }
@@ -75,7 +61,7 @@ Response handleGet(const Request& request, EffectiveRoute& eff) {
 	Response response;
     response.closingConnection = eff.closeConnection;
 
-    if (checkRequestVersion(request.version, response) == ERROR)
+    if (checkRequestVersion(request.version, response, eff.server->error_pages) == ERROR)
 		return response;
 	
 	if (eff.isDir)
@@ -83,7 +69,7 @@ Response handleGet(const Request& request, EffectiveRoute& eff) {
 		
     std::ifstream inFile(eff.uri.c_str(), std::ios::binary);
     if (!inFile) {
-        response.createResponse(500, "Failed to open file");
+        response.createResponse(500, "Failed to open file", eff.server->error_pages);
         return response;
     }
 	
@@ -93,7 +79,7 @@ Response handleGet(const Request& request, EffectiveRoute& eff) {
 	
     inFile.close();
     if (!inFile) {
-        response.createResponse(500, "Error closing file");
+        response.createResponse(500, "Error closing file", eff.server->error_pages);
         return response;
     }
 	
@@ -125,11 +111,11 @@ Response handleIndex(const EffectiveRoute& eff) {
     	    case EPERM:   		
 			case ELOOP:		
 			case ENAMETOOLONG:
-				response.createResponse(403, "");
+				response.createResponse(403, "", eff.server->error_pages);
 				return response;
 				
     	    default:
-				response.createResponse(500, "");
+				response.createResponse(500, "", eff.server->error_pages);
 				return response;
 		}
 	}
@@ -137,17 +123,17 @@ Response handleIndex(const EffectiveRoute& eff) {
 	struct stat st;
 	if (stat(index_path.c_str(), &st) != 0) {
 		close(fd);
-		response.createResponse(500, "");
+		response.createResponse(500, "", eff.server->error_pages);
 		return response;
 	} else if (!S_ISREG(st.st_mode)) {
 		close(fd);
 		return handleAutoIndex(eff);
 	}
 	
-	return createIndexResponse(fd, eff.closeConnection);	
+	return createIndexResponse(fd, eff.closeConnection, eff.server->error_pages);	
 }
 
-Response createIndexResponse(int fd, bool closeConnection) {
+Response createIndexResponse(int fd, bool closeConnection, std::map<int, std::string> error_pages) {
 	Response response;
 	response.closingConnection = closeConnection;
     response.version = "HTTP/1.1";
@@ -167,7 +153,7 @@ Response createIndexResponse(int fd, bool closeConnection) {
     if (n < 0) {
 		Response resp;
 		resp.closingConnection = closeConnection;
-		resp.createResponse(500, "");
+		resp.createResponse(500, "", error_pages);
 		return resp;
     }
 	
@@ -181,7 +167,7 @@ Response handleAutoIndex(const EffectiveRoute& eff) {
 		std::cout << "Hello:" << eff.autoindex << std::endl;
 		Response response;
 		response.closingConnection = eff.closeConnection;
-		response.createResponse(403, "AutoIndex Not allowed by Default (add rule in config file)");
+		response.createResponse(403, "AutoIndex Not allowed by Default (add rule in config file)", eff.server->error_pages);
 		return response;
 	}
 	
@@ -208,7 +194,7 @@ Response createAutoIndexResponse(const EffectiveRoute& eff) {
 	if (!dir) {
 		Response resp;
 		resp.closingConnection = eff.closeConnection;
-		resp.createResponse(500, "");
+		resp.createResponse(500, "", eff.server->error_pages);
 		return response;
 	}
 
@@ -261,20 +247,20 @@ Response handlePost(const Request& request, const EffectiveRoute& eff) {
 	File file;
 	
 	file.response.closingConnection = shouldConnectionBeClosed(request.headers);
-	if (checkRequestVersion(request.version, file.response) == ERROR)
+	if (checkRequestVersion(request.version, file.response, eff.server->error_pages) == ERROR)
 		return file.response;
 	
 	if (file.getFileName(eff) == ERROR)
 		return file.response;
 	std::cout << "FileName:\t" << file.fileName << std::endl;
 
-	if (file.getFileData(request) == ERROR)
+	if (file.getFileData(request, eff) == ERROR)
 		return file.response;
 
 	if (file.createFile(request.body, eff) == ERROR)
 		return file.response;
 	
-	file.response.createResponse(200, "File Created");
+	file.response.createResponse(200, "File Created", eff.server->error_pages);
 	return file.response;
 }
 		
@@ -289,7 +275,7 @@ Response handleDelete(const Request& request, const EffectiveRoute& eff) {
 	
 	file.response.closingConnection = shouldConnectionBeClosed(request.headers);
 	
-	if (checkRequestVersion(request.version, file.response) == ERROR)
+	if (checkRequestVersion(request.version, file.response, eff.server->error_pages) == ERROR)
 		return file.response;
 		
 	if (file.getFileName(eff) == ERROR)
@@ -301,49 +287,49 @@ Response handleDelete(const Request& request, const EffectiveRoute& eff) {
 		file.filePath = eff.root + "/upload/" + file.fileName;
 	
 	if (unlink(file.filePath.c_str()) != 0) { //Unlink is not read or write, errno is allowed
-		file.createDeleteResponse(errno);
+		file.createDeleteResponse(errno, eff.server->error_pages);
 		return file.response;
 	}
-	file.response.createResponse(204, "");
+	file.response.createResponse(204, "", eff.server->error_pages);
 	return file.response;
 }
 
-void File::createDeleteResponse(const int err) {
+void File::createDeleteResponse(const int err, std::map<int, std::string> error_pages) {
     switch (err) {
         case ENOENT:  // No such file or directory
-            response.createResponse(404, "Ressource was not Found"); // Not Found
+            response.createResponse(404, "Ressource was not Found", error_pages); // Not Found
             break;
 
         case EACCES:  // Permission denied
-            response.createResponse(403, "Operation is not Allowed"); // Not Found
+            response.createResponse(403, "Operation is not Allowed", error_pages); // Not Found
             break;
 			
         case ENOTDIR: // Component in path is not a directory
-            response.createResponse(404, "Path Invalid"); // Not Found
+            response.createResponse(404, "Path Invalid", error_pages); // Not Found
             break;
 			
         case EROFS:   // Read-only filesystem
-            response.createResponse(403, "Server cannot modify resource"); // Not Found
+            response.createResponse(403, "Server cannot modify resource", error_pages); // Not Found
             break;
 
         case EPERM:   // Operation not permitted (e.g., deleting directory)
-            response.createResponse(403, "Operation Not Permitted"); // Not Found
+            response.createResponse(403, "Operation Not Permitted", error_pages); // Not Found
             break;
 		
         case EISDIR:  // Is a directory
-            response.createResponse(403, "Delete Not Allowed on Directory"); // Not Found
+            response.createResponse(403, "Delete Not Allowed on Directory", error_pages); // Not Found
             break;
 
         case ENAMETOOLONG: // Path too long
-            response.createResponse(414, ""); // Not Found
+            response.createResponse(414, "", error_pages); // Not Found
             break;
 
         case EBUSY: // Resource busy (locked)
-            response.createResponse(423, "Ressource is currently locked or in use"); // Not Found
+            response.createResponse(423, "Ressource is currently locked or in use", error_pages); // Not Found
             break;
 
         default:
-            response.createResponse(500, "Unexpected failure"); // Not Found
+            response.createResponse(500, "Unexpected failure", error_pages); // Not Found
             break;
 	}
 }
@@ -362,7 +348,7 @@ int File::getFileName(const EffectiveRoute& eff) {
 
     // Must start with "root/alias + /upload/"
     if (eff.uri.compare(0, directory.size(), directory) != 0) {
-		response.createResponse(404, "File must be posted to: *root or alias*/upload/*filename*");
+		response.createResponse(404, "File must be posted to: *root or alias*/upload/*filename*", eff.server->error_pages);
         return ERROR;
 	}
 
@@ -371,13 +357,13 @@ int File::getFileName(const EffectiveRoute& eff) {
 
     // Filename must not be empty
     if (fileName.empty()) {
-		response.createResponse(400, "A Filename should be mentioned in the uri: '/upload/*filename*'");
+		response.createResponse(400, "A Filename should be mentioned in the uri: '/upload/*filename*'", eff.server->error_pages);
         return ERROR;
 	}
 
     // Filename must not contain '/'
     if (fileName.find('/') != std::string::npos) {
-		response.createResponse(400, "Filename should not contain '/' char");
+		response.createResponse(400, "Filename should not contain '/' char", eff.server->error_pages);
         return ERROR;
 	}
 
@@ -386,7 +372,7 @@ int File::getFileName(const EffectiveRoute& eff) {
 
 int File::createFile(const std::string& body, const EffectiveRoute& eff) {
 	if (body.size() != length) {
-		response.createResponse(400 , "Mismatch between request: Body size/Content-Length");
+		response.createResponse(400 , "Mismatch between request: Body size/Content-Length", eff.server->error_pages);
 		return ERROR;
 	}
 	filePath = generateUniqueFilename(eff);
@@ -394,19 +380,19 @@ int File::createFile(const std::string& body, const EffectiveRoute& eff) {
 	
 	std::ofstream outFile(filePath.c_str(), std::ios::binary);
 	if (!outFile) {
-		response.createResponse(500, "Outfile Could not be Opened");
+		response.createResponse(500, "Outfile Could not be Opened", eff.server->error_pages);
 		return ERROR;
 	}
 	
 	outFile.write(body.data(), body.size());
 	if (!outFile) {
-		response.createResponse(500, "Error during: Write to File");
+		response.createResponse(500, "Error during: Write to File", eff.server->error_pages);
 		return ERROR;
 	}
 	
 	outFile.close();
 	if (!outFile) {
-		response.createResponse(500, "Error while attempting to close the file ");
+		response.createResponse(500, "Error while attempting to close the file ", eff.server->error_pages);
 		return ERROR;
 	}
 	return SUCCESS;
@@ -448,14 +434,14 @@ std::string File::generateUniqueFilename(const EffectiveRoute& eff) {
     return fullPath;
 }
 
-int File::getFileData(const Request& request) {
+int File::getFileData(const Request& request, const EffectiveRoute& eff) {
 	//STEP 1: Check Header Content Type (Empty or application/octet-stream)
 	const std::map<std::string, std::string> headers = request.headers;
 	std::map<std::string,std::string>::const_iterator it = headers.find("content-type"); 
 	if (it != headers.end()) {
 		std::string contentType = it->second;
 		if (checkContentType(contentType) == ERROR) {
-			response.createResponse(415, "Only Content-Type allowed:\n'application/octet-stream'");
+			response.createResponse(415, "Only Content-Type allowed:\n'application/octet-stream'", eff.server->error_pages);
 			return ERROR;
 		}
 	}
@@ -463,11 +449,11 @@ int File::getFileData(const Request& request) {
 	//STEP 2: Check that Header Content-Length is present and Valid
 	std::map<std::string,std::string>::const_iterator itLength = headers.find("content-length"); 
 	if (itLength == headers.end()) {
-		response.createResponse(411, "");
+		response.createResponse(411, "", eff.server->error_pages);
 		return ERROR; //Need to have a Content-Lenght 
 	}
 	else if (isValidContentLength(itLength->second) == ERROR) {
-		response.createResponse(400 , "Invalid Content-Length");
+		response.createResponse(400 , "Invalid Content-Length", eff.server->error_pages);
 		return ERROR; //Invalid Content-Lenght
 	}
 	return SUCCESS;
@@ -524,10 +510,10 @@ bool shouldConnectionBeClosed(const std::map<std::string, std::string>& headers)
 	return false;
 }
 
-int checkRequestVersion(const std::string& version, Response& response) {
+int checkRequestVersion(const std::string& version, Response& response, std::map<int, std::string> error_pages) {
 	const std::string allowedVersion = "HTTP/1.1";
 	if (version.compare(0, version.size(), allowedVersion) != 0) {
-		response.createResponse(505, "");
+		response.createResponse(505, "", error_pages);
 		return ERROR;
 	}
 	return SUCCESS;
@@ -544,7 +530,7 @@ std::string Response::responseToString() const {
 	return oss.str();
 }
 
-void Response::createResponse(unsigned int code, const std::string& bodyText) {
+void Response::createResponse(unsigned int code, const std::string& bodyText, std::map<int, std::string> error_pages) {
     version = "HTTP/1.1";
     statusCode = code;
     statusMessage = getStatusMessage(code);
@@ -562,12 +548,13 @@ void Response::createResponse(unsigned int code, const std::string& bodyText) {
         headers.erase("Content-Type");
     }
 
-    headers["Content-Length"] = toString<size_t>(body.size());
-
     // 3 - Connection handling
 	setClosingConnection();
-	if (isErrorStatusCode(statusCode))
-		setErrorPage();
+	if (isErrorStatusCode(statusCode)) {
+		if (setCustomErrorPage(error_pages) == false)
+			setDefaultErrorPage();
+	}
+    headers["Content-Length"] = toString<size_t>(body.size());
 }
 
 void Response::setClosingConnection(void) {
@@ -646,7 +633,64 @@ bool isErrorStatusCode(int statusCode) {
 	return true;
 }
 
-void Response::setErrorPage() {
+bool Response::setCustomErrorPage(std::map<int, std::string> error_pages) {
+	std::cout << "1" << std::endl;
+	std::map<int, std::string>::iterator it = error_pages.find(statusCode);
+	if (it == error_pages.end())
+		return false;
+		
+	std::cout << "ERROR PAGE URI: \t" << it->second << std::endl;
+	
+	int fd = open(it->second.c_str(), O_RDONLY);
+	if (fd < 0) { // Checking Errno is allowed here: open is neither a write or read action
+		std::cout << "2" << std::endl;
+		return false;
+	}
+
+	struct stat st;
+	if (stat(it->second.c_str(), &st) != 0) {
+		std::cout << "3" << std::endl;
+		close(fd);
+		return false;
+	} else if (!S_ISREG(st.st_mode)) {
+		std::cout << "4" << std::endl;
+		close(fd);
+		return false;
+	}
+
+	body.clear();
+	if (!writeCustomErrorToBody(fd)) {
+		body.clear();
+		return false;
+	}
+	
+	setHeader("Content-Type", "text/html");	
+	std::cout << "7" << std::endl;
+	return true;
+}
+
+bool Response::writeCustomErrorToBody(int fd) {
+	const size_t BUFSZ = 64 * 1024;
+    std::vector<char> buf(BUFSZ);
+    ssize_t n;
+	
+    while ((n = read(fd, &buf[0], BUFSZ)) > 0)
+		body.append(&buf[0], static_cast<std::string::size_type>(n));
+    close(fd);
+
+    if (n < 0) {
+		std::cout << "5" << std::endl;
+		body.clear();
+		return false;
+	}
+	
+	setHeader("Content-Length", toString<size_t>(body.size()));
+	std::cout << body.size() << std::endl;
+	std::cout << "6" << std::endl;
+	return true;
+}
+
+void Response::setDefaultErrorPage() {
 	headers["Content-Type"] = "text/html";
 	body = 	"<!DOCTYPE html>";
 	body +=	"<html>";

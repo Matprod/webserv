@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
+/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:42:06 by allan             #+#    #+#             */
-/*   Updated: 2025/09/20 15:30:15 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/21 15:44:06 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,21 +41,6 @@ void handle_new_connection(int serverFd, const ServerConfig* config, std::vector
     	clientFdToServerConfig[cfd] = config;
 	}
 }
-
-/* void handle_new_connection(int serverFd, const ServerConfig* config, std::vector<pollfd>& fds, std::map<int, bool>& isServerFd, std::map<int, time_t>& lastActivity, std::map<int, const ServerConfig*>& clientFdToServerConfig) {
-	int clientFd = accept(serverFd, 0, 0);
-	if (clientFd >= 0) {
-		pollfd clientPoll;
-		clientPoll.fd = clientFd;
-		clientPoll.events = POLLIN;
-		clientPoll.revents = 0;
-		fds.push_back(clientPoll);
-		isServerFd[clientFd] = false;
-		lastActivity[clientFd] = time(NULL);
- 		clientFdToServerConfig[clientFd] = config;
-		std::cout << "New Client Socket Created: " << clientFd << std::endl;
-	}
-} */
 
 void close_client(int fd, std::vector<pollfd>& fds, std::map<int, bool>& isServerFd, std::map<int, std::string>& clientBuffers, std::map<int, time_t>& lastActivity, std::map<int, const ServerConfig*>& clientFdToServerConfig) {
 	std::cout << "Fermeture client " << fd << std::endl;

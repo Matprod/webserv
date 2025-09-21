@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Socket.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
+/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/08 13:55:38 by allan             #+#    #+#             */
-/*   Updated: 2025/09/20 15:01:49 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/21 15:12:44 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 
 void setupSockets(std::vector<ServerConfig>& config) {
 	for (std::vector<ServerConfig>::iterator it = config.begin(); it != config.end(); ++it) {
+		//for (it->port
 		//STEP 1: Create the Socket
 		int socketFd = socket(AF_INET, SOCK_STREAM, 0);		//Will be use for an IPV4 addr (AF_INET), using TCP (SOCK_STREAM)
 		if (socketFd < 0) {
