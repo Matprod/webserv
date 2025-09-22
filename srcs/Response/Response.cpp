@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mvoisin <mvoisin@student.42.fr>            +#+  +:+       +#+        */
+/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:45:12 by allan             #+#    #+#             */
-/*   Updated: 2025/09/21 17:35:29 by mvoisin          ###   ########.fr       */
+/*   Updated: 2025/09/21 17:56:48by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,11 +20,9 @@ Response buildResponse(const Request& request, const std::vector<ServerConfig>& 
 	bool use_location = false;
 	
 	LocationConfig* loc = getMatchingLocation(request, request.config, res, use_location);
-	if (!loc)
-    	return res;
 	
-	if (isCGIRequest(*loc, request.uri))
-		return executeCGI(request, *loc, *request.config);
+	if (isCGIRequest(loc, request.uri))
+		return executeCGI(request, loc, request.config);	
 	
 	EffectiveRoute eff;
 	eff.getMethod = request.method == "GET" ? true : false;
@@ -39,6 +37,15 @@ Response buildResponse(const Request& request, const std::vector<ServerConfig>& 
 		
 	int result;
 	result = eff.createEffectivePath(request.uri);
+	if (use_location && eff.redirect_status >= 300 && eff.redirect_status <= 399 && !eff.redirect_url.empty()) {
+        res.statusCode = eff.redirect_status;
+        res.statusMessage = getStatusMessage(eff.redirect_status);
+        res.headers["Location"] = eff.redirect_url;
+        res.body = "<html><head><title>Redirect</title></head><body>Redirecting to <a href='" + eff.redirect_url + "'>" + eff.redirect_url + "</a></body></html>";
+        res.headers["Content-Type"] = "text/html";
+        res.headers["Content-Length"] = toString<size_t>(res.body.size());
+        return res;
+    }
 	if (result != PATH_OK) {
 		res.createResponse(result, "", eff.server->error_pages);
 		return res;

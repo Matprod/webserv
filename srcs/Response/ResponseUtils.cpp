@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ResponseUtils.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mvoisin <mvoisin@student.42.fr>            +#+  +:+       +#+        */
+/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/22 17:45:56 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/21 17:30:36 by mvoisin          ###   ########.fr       */
+/*   Updated: 2025/09/21 18:49:15 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,14 +90,16 @@ bool handleRedirect(const LocationConfig& loc, Response& res) {
 	return false;
 }
 
-bool isCGIRequest(const LocationConfig& loc, const std::string& uri) {
+bool isCGIRequest(const LocationConfig* loc, const std::string& uri) {
+	if (!loc)
+		return false;
     std::string extension = getFileExtension(uri);
     std::cout << "[isCGIRequest] uri: " << uri << ", extension: " << extension << std::endl;
-    std::cout << "[isCGIRequest] cgi_extensions size: " << loc.cgi_extensions.size() << std::endl;
-    for (std::map<std::string, std::string>::const_iterator it = loc.cgi_extensions.begin(); it != loc.cgi_extensions.end(); ++it) {
+    std::cout << "[isCGIRequest] cgi_extensions size: " << loc->cgi_extensions.size() << std::endl;
+    for (std::map<std::string, std::string>::const_iterator it = loc->cgi_extensions.begin(); it != loc->cgi_extensions.end(); ++it) {
         std::cout << "[isCGIRequest] cgi_extension: " << it->first << " -> " << it->second << std::endl;
     }
-    bool result = (!loc.cgi_extensions.empty() && loc.cgi_extensions.find(extension) != loc.cgi_extensions.end());
+    bool result = (!loc->cgi_extensions.empty() && loc->cgi_extensions.find(extension) != loc->cgi_extensions.end());
     std::cout << "[isCGIRequest] result: " << result << std::endl;
     return result;
 }

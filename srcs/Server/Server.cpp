@@ -6,7 +6,7 @@
 /*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:29:23 by allan             #+#    #+#             */
-/*   Updated: 2025/09/21 16:59:34 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/21 18:43:36 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,7 @@ void check_timeouts(std::vector<pollfd>& fds,
 	}
 }
 
-int serverLoop(const std::vector<ServerConfig>& servers) {
+void serverLoop(const std::vector<ServerConfig>& servers) {
 	std::vector<pollfd> fds;
 	std::map<int, bool> isServerFd;
 	std::map<int, std::string> clientBuffers;
@@ -62,6 +62,10 @@ int serverLoop(const std::vector<ServerConfig>& servers) {
 
 		int ready = poll(fds.data(), fds.size(), -1);
 		if (ready < 0) {
+			if (errno == EINTR) {
+				if (g_stop) break;
+				continue;
+			}
 			perror("poll");
 			continue;
 		}
@@ -107,12 +111,17 @@ int serverLoop(const std::vector<ServerConfig>& servers) {
 				}
 			}
 		}
-		if (g_stop) {
+/* 		if (g_stop) {
 			std::cout << "Arrêt du serveur, fermeture des sockets... ligne " << __LINE__ << std::endl;
 			for (size_t i = 0; i < fds.size(); ++i) {
+				std::cout << "Closing Fd:\t" << toString<int>(fds[i].fd) << std::endl;
 				close(fds[i].fd);
 			}
 			fds.clear();
-		}
+		} */
+	}
+	for (size_t i = 0; i < fds.size(); ++i) {
+		std::cout << "Closing Fd:\t" << toString<int>(fds[i].fd) << std::endl;
+		close(fds[i].fd);
 	}
 }

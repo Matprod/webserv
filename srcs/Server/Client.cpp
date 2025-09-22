@@ -6,7 +6,7 @@
 /*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:42:06 by allan             #+#    #+#             */
-/*   Updated: 2025/09/21 15:44:06 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/21 18:30:23 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,13 +17,13 @@ void handle_new_connection(int serverFd, const ServerConfig* config, std::vector
     	sockaddr_in sa; socklen_t sl = sizeof(sa);
     	int cfd = accept (serverFd, (sockaddr*)&sa, &sl);
     	if (cfd < 0) {
-    	    if (errno == EAGAIN || errno == EWOULDBLOCK) break; // nothing left
+    	    if (errno == EAGAIN || errno == EWOULDBLOCK) break;
     	    if (errno == EINTR) continue;
     	    perror("accept");
     	    break;
     	}
 	
-    	// ---- make client non-blocking + cloexec ----
+    	// Make client non-blocking + cloexec
     	int fl = fcntl(cfd, F_GETFL, 0);
     	if (fl == -1 || fcntl(cfd, F_SETFL, fl | O_NONBLOCK) == -1) {
     	    perror("fcntl O_NONBLOCK (client)");
@@ -33,8 +33,11 @@ void handle_new_connection(int serverFd, const ServerConfig* config, std::vector
     	int fdfl = fcntl(cfd, F_GETFD, 0);
     	if (fdfl != -1) fcntl(cfd, F_SETFD, fdfl | FD_CLOEXEC);
 	
-    	// ---- register in your data structures ----
-    	pollfd p; p.fd = cfd; p.events = POLLIN; p.revents = 0;
+    	pollfd p;
+		p.fd = cfd;
+		p.events = POLLIN;
+		p.revents = 0;
+
     	fds.push_back(p);
     	isServerFd[cfd] = false;
     	lastActivity[cfd] = time(NULL);

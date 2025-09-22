@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CgiExecutor.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
+/*   By: mvoisin <mvoisin@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/18 15:54:17 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/11 15:11:28 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/21 18:39:52 by mvoisin          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,4 +23,4 @@ std::string getQueryString(const std::string& uri);
 std::string getPathInfo(const std::string& uri, const std::string& loc_path, const std::string& script_name);
 ServerConfig* findMatchingServer(const Request& req, const std::vector<ServerConfig>& servers);
 LocationConfig* findMatchingLocation(const std::string& uri, const std::vector<LocationConfig>& locations, bool &use_location);
-Response executeCGI(const Request& req, const LocationConfig& loc, const ServerConfig& server);
+Response executeCGI(const Request& req, const LocationConfig* loc, const ServerConfig* server);

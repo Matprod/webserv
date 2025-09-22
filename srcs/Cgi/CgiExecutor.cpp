@@ -179,12 +179,12 @@ void parseCgiResponse(const std::string& cgiOutput, Response& res) {
 	}
 }
 
-Response executeCGI(const Request& req, const LocationConfig& loc, const ServerConfig& server) {
+Response executeCGI(const Request& req, const LocationConfig* loc, const ServerConfig* server) {
 	Response res;
 	res.version = "HTTP/1.1";
 
 	std::string extension = getFileExtension(req.uri);
-	if (loc.cgi_extensions.find(extension) == loc.cgi_extensions.end()) {
+	if (loc->cgi_extensions.find(extension) == loc->cgi_extensions.end()) {
 		res.statusCode = 404;
 		res.statusMessage = getStatusMessage(404);
 		res.body = "CGI Extension Not Supported";
@@ -193,13 +193,13 @@ Response executeCGI(const Request& req, const LocationConfig& loc, const ServerC
 		return res;
 	}
 
-	std::string cgiProgram = loc.cgi_extensions.at(extension);
+	std::string cgiProgram = loc->cgi_extensions.at(extension);
 	std::string scriptName = getScriptName(req.uri);
 	std::string rootPath;
-	if (loc.has_root) {
-		rootPath = loc.root;
-	} else if (server.has_root) {
-		rootPath = server.root;
+	if (loc->has_root) {
+		rootPath = loc->root;
+	} else if (server->has_root) {
+		rootPath = server->root;
 	} else {
 		res.statusCode = 500;
 		res.statusMessage = getStatusMessage(500);
@@ -210,15 +210,15 @@ Response executeCGI(const Request& req, const LocationConfig& loc, const ServerC
 	}
 	
 	std::string scriptPath = rootPath + "/" + scriptName;
-	std::string pathInfo = getPathInfo(req.uri, loc.path, scriptName);
+	std::string pathInfo = getPathInfo(req.uri, loc->path, scriptName);
 	std::string queryString = getQueryString(req.uri);
 	
 	std::cout << "CGI DEBUG:" << std::endl;
 	std::cout << "  Extension: " << extension << std::endl;
 	std::cout << "  CGI Program: " << cgiProgram << std::endl;
 	std::cout << "  Script Name: " << scriptName << std::endl;
-	std::cout << "  Location Root: " << loc.root << std::endl;
-	std::cout << "  Server Root: " << server.root << std::endl;
+	std::cout << "  Location Root: " << loc->root << std::endl;
+	std::cout << "  Server Root: " << server->root << std::endl;
 	std::cout << "  Used Root: " << rootPath << std::endl;
 	std::cout << "  Script Path: " << scriptPath << std::endl;
 
@@ -287,9 +287,9 @@ Response executeCGI(const Request& req, const LocationConfig& loc, const ServerC
 		env_vars.push_back("SCRIPT_NAME=" + scriptName);
 		env_vars.push_back("SCRIPT_FILENAME=" + scriptPath);
 		env_vars.push_back("PATH_INFO=" + pathInfo);
-		env_vars.push_back("PATH_TRANSLATED=" + loc.root + pathInfo);
-		env_vars.push_back("SERVER_NAME=" + (server.server_names.empty() ? "localhost" : server.server_names[0]));
-		env_vars.push_back("SERVER_PORT=" + toString<int>(server.port));
+		env_vars.push_back("PATH_TRANSLATED=" + loc->root + pathInfo);
+		env_vars.push_back("SERVER_NAME=" + (server->server_names.empty() ? "localhost" : server->server_names[0]));
+		env_vars.push_back("SERVER_PORT=" + toString<int>(server->port));
 		env_vars.push_back("SERVER_PROTOCOL=HTTP/1.1");
 		env_vars.push_back("GATEWAY_INTERFACE=CGI/1.1");
 		env_vars.push_back("REDIRECT_STATUS=200");
