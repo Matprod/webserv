@@ -111,7 +111,7 @@ Response handleIndex(const EffectiveRoute& eff) {
 	Response response;
 	response.closingConnection = eff.closeConnection;
 	
-	std::string index_path = eff.uri + "index.html";
+	std::string index_path = eff.uri + eff.index;
 	
 	int fd = open(index_path.c_str(), O_RDONLY);
 	if (fd < 0) { // Checking Errno is allowed here: open is neither a write or read action
@@ -158,7 +158,7 @@ Response createIndexResponse(int fd, bool closeConnection, std::map<int, std::st
 	const size_t BUFSZ = 64 * 1024;
     std::vector<char> buf(BUFSZ);
     ssize_t n;
-    while ((n = read(fd, &buf[0], BUFSZ)) > 0)
+    while ((n = read(fd, &buf[0], BUFSZ)) > 0) //Read Check OK
 		response.body.append(&buf[0], static_cast<std::string::size_type>(n));
     close(fd);
 
@@ -246,6 +246,7 @@ Response createAutoIndexResponse(const EffectiveRoute& eff) {
     response.headers["Content-Length"] = toString<size_t>(response.body.size());
     response.headers["Connection"] = (eff.closeConnection ? "close" : "keep-alive");
 	
+	closedir(dir);
 	return response;
 }
 
@@ -353,32 +354,21 @@ void File::createDeleteResponse(const int err, std::map<int, std::string> error_
 int File::getFileName(const EffectiveRoute& eff) {
 	
     std::string directory;
-	if (eff.use_alias)
-		directory = eff.alias + "/upload/";
-	else
-		directory = eff.root + "/upload/";
+	size_t pos = eff.uri.find_last_of('/');
 
-    // Must start with "root/alias + /upload/"
-    if (eff.uri.compare(0, directory.size(), directory) != 0) {
-		response.createResponse(404, "File must be posted to: *root or alias*/upload/*filename*", eff.server->error_pages);
+    std::string name;
+    if (pos == std::string::npos) {
+        name = eff.uri;
+    } else {
+        name = eff.uri.substr(pos + 1);
+    }
+
+    if (name.empty()) {
+        response.createResponse(400, "A filename must be provided in the URI", eff.server->error_pages);
         return ERROR;
-	}
+    }
 
-    // Extract filename after "/upload/"
-    fileName = eff.uri.substr(directory.size());
-
-    // Filename must not be empty
-    if (fileName.empty()) {
-		response.createResponse(400, "A Filename should be mentioned in the uri: '/upload/*filename*'", eff.server->error_pages);
-        return ERROR;
-	}
-
-    // Filename must not contain '/'
-    if (fileName.find('/') != std::string::npos) {
-		response.createResponse(400, "Filename should not contain '/' char", eff.server->error_pages);
-        return ERROR;
-	}
-
+    fileName = name;
     return SUCCESS;
 }
 
@@ -396,7 +386,7 @@ int File::createFile(const std::string& body, const EffectiveRoute& eff) {
 		return ERROR;
 	}
 	
-	outFile.write(body.data(), body.size());
+	outFile.write(body.data(), body.size()); //std::ofstream::write() != write();
 	if (!outFile) {
 		response.createResponse(500, "Error during: Write to File", eff.server->error_pages);
 		return ERROR;
@@ -418,9 +408,9 @@ bool File::fileExists(const std::string fullPath) const {
 std::string File::generateUniqueFilename(const EffectiveRoute& eff) {
     std::string baseDir;
 	if (eff.use_alias)
-		baseDir = eff.alias + "/upload/";
+		baseDir = eff.alias + eff.upload_path + "/";
 	else
-		baseDir = eff.root + "/upload/";
+		baseDir = eff.root + eff.upload_path + "/";
 		
     std::string name = fileName;
     std::string extension = "";
@@ -646,26 +636,22 @@ bool isErrorStatusCode(int statusCode) {
 }
 
 bool Response::setCustomErrorPage(std::map<int, std::string> error_pages) {
-	std::cout << "1" << std::endl;
 	std::map<int, std::string>::iterator it = error_pages.find(statusCode);
 	if (it == error_pages.end())
 		return false;
 		
-	std::cout << "ERROR PAGE URI: \t" << it->second << std::endl;
+	//std::cout << "ERROR PAGE URI: \t" << it->second << std::endl;
 	
 	int fd = open(it->second.c_str(), O_RDONLY);
-	if (fd < 0) { // Checking Errno is allowed here: open is neither a write or read action
-		std::cout << "2" << std::endl;
+	if (fd < 0) { // Check Errno allowed here: open is neither a write or read action
 		return false;
 	}
 
 	struct stat st;
 	if (stat(it->second.c_str(), &st) != 0) {
-		std::cout << "3" << std::endl;
 		close(fd);
 		return false;
 	} else if (!S_ISREG(st.st_mode)) {
-		std::cout << "4" << std::endl;
 		close(fd);
 		return false;
 	}
@@ -677,7 +663,6 @@ bool Response::setCustomErrorPage(std::map<int, std::string> error_pages) {
 	}
 	
 	setHeader("Content-Type", "text/html");	
-	std::cout << "7" << std::endl;
 	return true;
 }
 
@@ -686,19 +671,17 @@ bool Response::writeCustomErrorToBody(int fd) {
     std::vector<char> buf(BUFSZ);
     ssize_t n;
 	
-    while ((n = read(fd, &buf[0], BUFSZ)) > 0)
+    while ((n = read(fd, &buf[0], BUFSZ)) > 0) //Check Read OK
 		body.append(&buf[0], static_cast<std::string::size_type>(n));
     close(fd);
 
     if (n < 0) {
-		std::cout << "5" << std::endl;
 		body.clear();
 		return false;
 	}
 	
 	setHeader("Content-Length", toString<size_t>(body.size()));
 	std::cout << body.size() << std::endl;
-	std::cout << "6" << std::endl;
 	return true;
 }
 

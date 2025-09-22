@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   EffectiveRoute.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
+/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/10 14:20:55 by adebert           #+#    #+#             */
-/*   Updated: 2025/09/20 15:39:50 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/22 15:15:55 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,12 +43,24 @@ bool EffectiveRoute::createEffectiveRoute(const ServerConfig* srv, const Locatio
 		allow_methods.insert("POST");
 		allow_methods.insert("DELETE");
 	}
+
+/* 	if (!loc->index.empty())
+		index = loc->index;
+	else if (!srv->index.empty())
+		index = srv->index;
+	else */
+		index = "index.html";
 	
 	if (loc->autoindex)
 		autoindex = loc->autoindex;
 	else
 		autoindex = srv->autoindex;
 	
+	if (!loc->upload_path.empty())
+		upload_path = loc->upload_path;
+	else
+		upload_path = "/upload";
+		
 	location_prefix = loc->path;
 	redirect_status = loc->redirect_status;
 	redirect_url = loc->redirect_url;
@@ -76,6 +88,13 @@ bool EffectiveRoute::createEffectiveRoute(const ServerConfig* srv) {
 		allow_methods.insert("DELETE");
 	}
 	
+/* 	if (!srv->index.empty())
+		index = srv->index;
+	else */
+		index = "index.html";
+	
+	upload_path = "/upload";
+		
 	autoindex = srv->autoindex;
 	
 	location_prefix = "/";

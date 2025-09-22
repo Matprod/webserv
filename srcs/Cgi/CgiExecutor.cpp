@@ -340,7 +340,7 @@ Response executeCGI(const Request& req, const LocationConfig* loc, const ServerC
 
 	// Lire la sortie du CGI
 	std::string cgiOutput = readCgiOutput(pipe_out[0]);
-	close(pipe_out[0]);
+	close(pipe_out[0]); //For read: we're closing fd here
 
 	// Attendre que le processus CGI se termine
 	int status;

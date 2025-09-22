@@ -6,7 +6,7 @@
 /*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:42:06 by allan             #+#    #+#             */
-/*   Updated: 2025/09/21 18:30:23 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/22 13:54:17 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,7 +71,7 @@ int handle_client_request(int fd, std::vector<pollfd>& fds, int& i,
 
 	if (result == REQUEST_ERROR) {
 		std::cerr << "Error of parsing for the request\n";
-		close_client(fd, fds, isServerFd, clientBuffers, lastActivity, clientFdToServerConfig);
+		close_client(fd, fds, isServerFd, clientBuffers, lastActivity, clientFdToServerConfig); //Here for 
 		--i;
 		return REQUEST_ERROR;
 	}

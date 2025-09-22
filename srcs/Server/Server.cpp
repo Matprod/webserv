@@ -6,7 +6,7 @@
 /*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:29:23 by allan             #+#    #+#             */
-/*   Updated: 2025/09/21 18:43:36 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/22 14:12:47 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,8 +93,15 @@ void serverLoop(const std::vector<ServerConfig>& servers) {
 						Response res = buildResponse(req, servers);
 						std::string rawResponse = res.responseToString();
 						std::cout << "RESPONSE:\n" << rawResponse << std::endl;
-						send(fds[i].fd, rawResponse.c_str(), rawResponse.size(), 0); //THE ONLY SEND FOR EACH CLIENT
-						if (res.closingConnection == true) {
+						int result;
+						result = send(fds[i].fd, rawResponse.c_str(), rawResponse.size(), 0); //THE ONLY SEND FOR EACH CLIENT
+						if (result <= 0) {
+							std::cout << "Error Sending response" << std::endl;
+							close_client(fds[i].fd, fds, isServerFd, clientBuffers, lastActivity, clientFdToServerConfig);
+							--i;
+							continue;
+						}
+						else if (res.closingConnection == true) {
 							close_client(fds[i].fd, fds, isServerFd, clientBuffers, lastActivity, clientFdToServerConfig);
 							--i;
 							continue;
@@ -111,14 +118,6 @@ void serverLoop(const std::vector<ServerConfig>& servers) {
 				}
 			}
 		}
-/* 		if (g_stop) {
-			std::cout << "Arrêt du serveur, fermeture des sockets... ligne " << __LINE__ << std::endl;
-			for (size_t i = 0; i < fds.size(); ++i) {
-				std::cout << "Closing Fd:\t" << toString<int>(fds[i].fd) << std::endl;
-				close(fds[i].fd);
-			}
-			fds.clear();
-		} */
 	}
 	for (size_t i = 0; i < fds.size(); ++i) {
 		std::cout << "Closing Fd:\t" << toString<int>(fds[i].fd) << std::endl;

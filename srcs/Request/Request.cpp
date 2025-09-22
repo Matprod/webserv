@@ -6,7 +6,7 @@
 /*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:44:20 by allan             #+#    #+#             */
-/*   Updated: 2025/09/21 18:11:28 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/22 12:31:43 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@ int read_socket(int socket, std::map<int, std::string>& buffers, std::map<int, t
 	int bytes_read = recv(socket, buffer, sizeof(buffer) - 1, 0); //THE ONLY RECV FOR THIS CLIENT
 	if (bytes_read <= 0) {
 		if (bytes_read < 0)
+			//Close socket Here ?
 			std::cerr << "Erreur lors de la lecture de la socket\n";
 		return (bytes_read < 0) ? REQUEST_ERROR : REQUEST_INCOMPLETE;
 	}

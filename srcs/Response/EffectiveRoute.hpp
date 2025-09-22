@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   EffectiveRoute.hpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
+/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/10 14:16:15 by adebert           #+#    #+#             */
-/*   Updated: 2025/09/13 13:28:48 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/22 15:00:05 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,7 @@ struct EffectiveRoute {
     bool use_alias;                // true iff alias is active
     bool autoindex;
     std::set<std::string> allow_methods;
-    std::vector<std::string> index;
+    std::string index;
     std::string upload_path;       // may be empty if not set
     std::string location_prefix;   // loc->path
     int redirect_status;

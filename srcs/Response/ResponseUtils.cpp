@@ -6,13 +6,13 @@
 /*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/22 17:45:56 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/21 18:49:15 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/22 12:26:30 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ResponseUtils.hpp"
 
-std::string readLine(int fd) {
+/* std::string readLine(int fd) {
 	std::string line;
 	char c;
 	while (read(fd, &c, 1) == 1) {
@@ -20,7 +20,7 @@ std::string readLine(int fd) {
 		if (c == '\n') break;
 	}
 	return line;
-}
+} */
 
 std::string readChunkedBody(const std::string& rawData) {
 	std::string body;
