@@ -124,8 +124,11 @@ bool Config::parseServerDirective(const std::string& directive, const std::vecto
 		if (size == ERROR) return ERROR;
 		srv->max_body_size = size;
 	} else if (directive == "index") {
-		for (size_t i = 0; i < values.size(); ++i)
-			srv->index.push_back(values[i]);
+		if (values.size() != 1) {
+			std::cerr << "Error: Invalid index directive - only one value allowed" << std::endl;
+			return ERROR;
+		}
+		srv->index = values[0];
 	} else {
 		std::cerr << "Error: Unknown server directive: " << directive << std::endl;
 		return ERROR;
@@ -153,7 +156,7 @@ ServerConfig::ServerConfig()
 	server_names.clear();
 	error_pages.clear();
 	locations.clear();
-	index.clear();
+	index = "";
 	allow_methods.clear();
 }
 

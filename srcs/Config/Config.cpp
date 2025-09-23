@@ -17,9 +17,15 @@
 Config::Config(const std::string& path) {
 	this->error = 0;
 	if (parseFile(path) == ERROR)
+	{
+		std::cerr << "Error: Failed to parse config file" << std::endl;
 		this->error = 1;	
+	}
 	if (serversHaveRoot() == ERROR)
+	{
+		std::cerr << "Error: At least one server must have a root directive" << std::endl;
 		this->error = 1;
+	}
 }
 
 Config::~Config() {}

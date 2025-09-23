@@ -34,12 +34,7 @@ bool printConfig(const Config& config) {
         }
         std::cout << std::endl;
         std::cout << "  Root: " << server.root << std::endl;
-        std::cout << "  Index: ";
-        for (size_t j = 0; j < server.index.size(); ++j) {
-            std::cout << server.index[j];
-            if (j < server.index.size() - 1) std::cout << ", ";
-        }
-        std::cout << std::endl;
+        std::cout << "  Index: " << (server.index.empty() ? "none" : server.index) << std::endl;
         std::cout << "  Max Body Size: " << server.max_body_size << " bytes" << std::endl;
         std::cout << "  Error Pages: ";
         for (std::map<int, std::string>::const_iterator it = server.error_pages.begin(); it != server.error_pages.end(); ++it) {
@@ -60,14 +55,7 @@ bool printConfig(const Config& config) {
             std::cout << std::endl;
             std::cout << "  Root: " << loc.root << std::endl;
             std::cout << "  Autoindex: " << (loc.autoindex ? "on" : "off") << std::endl;
-            std::cout << "  Index: ";
-            for (size_t k = 0; k < loc.index.size(); ++k) {
-                std::cout << loc.index[k];
-                if (k < loc.index.size() - 1) std::cout << ", ";
-            }
-            if (loc.index.size() == 0)
-                std::cout << "none";
-            std::cout << std::endl;
+            std::cout << "  Index: " << (loc.index.empty() ? "none" : loc.index) << std::endl;
             std::cout << "  Redirect Status: " << (loc.redirect_status) << std::endl; // À corriger avec stringstream (voir ci-dessous)
             std::cout << "  Redirect URL: " << (loc.redirect_url.empty() ? "none" : loc.redirect_url) << std::endl;
             std::cout << "  CGI Extensions: ";

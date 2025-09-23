@@ -60,8 +60,11 @@ bool Config::parseLocationDirective(const std::string& directive, const std::vec
 			return ERROR;
 		}
 	} else if (directive == "index") {
-		for (size_t i = 0; i < values.size(); ++i)
-			loc->index.push_back(values[i]);
+		if (values.size() != 1) {
+			std::cerr << "Error: Invalid index directive - only one value allowed" << std::endl;
+			return ERROR;
+		}
+		loc->index = values[0];
 	} else if (directive == "cgi_extension") {
 		if (values.size() != 2) {
 			std::cerr << "Error: Invalid cgi_extension directive" << std::endl;
@@ -109,7 +112,7 @@ LocationConfig::LocationConfig()
 	: allow_methods()
 	, root("")
 	, autoindex(false)
-	, index()
+	, index("")
 	, cgi_extensions()
 	, upload_path("")
 	, path("")

@@ -27,7 +27,7 @@ class LocationConfig {// Need to be in canonical form ?
 	std::set<std::string> allow_methods;
 	std::string root;
 	bool autoindex;
-	std::vector<std::string> index;
+	std::string index;
 	std::map<std::string, std::string> cgi_extensions;
 	std::string upload_path;
 	std::string path;

@@ -27,7 +27,7 @@ public:
 	std::map<int, std::string> error_pages;
 	unsigned long max_body_size;
 	std::vector<LocationConfig> locations;
-	std::vector<std::string> index;
+	std::string index;
 	
 	std::set<std::string> allow_methods;
 	int socketFd;
