@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   EffectiveRoute.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
+/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/10 14:20:55 by adebert           #+#    #+#             */
-/*   Updated: 2025/09/22 15:15:55 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/24 13:39:13 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,11 +44,11 @@ bool EffectiveRoute::createEffectiveRoute(const ServerConfig* srv, const Locatio
 		allow_methods.insert("DELETE");
 	}
 
-/* 	if (!loc->index.empty())
+	if (!loc->index.empty())
 		index = loc->index;
 	else if (!srv->index.empty())
 		index = srv->index;
-	else */
+	else
 		index = "index.html";
 	
 	if (loc->autoindex)
@@ -88,9 +88,9 @@ bool EffectiveRoute::createEffectiveRoute(const ServerConfig* srv) {
 		allow_methods.insert("DELETE");
 	}
 	
-/* 	if (!srv->index.empty())
+	if (!srv->index.empty())
 		index = srv->index;
-	else */
+	else
 		index = "index.html";
 	
 	upload_path = "/upload";
