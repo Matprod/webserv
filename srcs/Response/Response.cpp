@@ -22,7 +22,10 @@ Response buildResponse(const Request& request, const std::vector<ServerConfig>& 
 	LocationConfig* loc = getMatchingLocation(request, request.config, res, use_location);
 	
 	if (isCGIRequest(loc, request.uri))
+	{
+		std::cout << "TESTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTt\n" << std::endl;
 		return executeCGI(request, loc, request.config);	
+	}
 	
 	EffectiveRoute eff;
 	eff.getMethod = request.method == "GET" ? true : false;

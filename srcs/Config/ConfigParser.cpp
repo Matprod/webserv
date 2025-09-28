@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigParser.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
+/*   By: mvoisin <mvoisin@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 20:17:11 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/11 16:48:34 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/28 16:29:16 by mvoisin          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,14 +49,14 @@ unsigned long Config::parseSize(const std::string& size_str) const {
 	unsigned long num = strtoul(num_str.c_str(), &endptr, 10);
 	if (*endptr != '\0' || num_str.empty()) {
 		std::cout << "Error: Invalid size format: " << size_str << std::endl;
-		return(ERROR);
+		return(ERROR_PARSE_SIZE);
 	}
 	if (unit == 'K') num *= 1024;
 	else if (unit == 'M') num *= 1024 * 1024;
 	else if (unit == 'G') num *= 1024 * 1024 * 1024;
 	else if (unit != '\0') {
 		std::cout << "Error: Invalid size unit: " << size_str << std::endl;
-		 return(ERROR);
+		return(ERROR_PARSE_SIZE);
 	}
 	return num;
 }

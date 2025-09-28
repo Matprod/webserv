@@ -6,7 +6,7 @@
 /*   By: mvoisin <mvoisin@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/22 11:00:25 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/21 17:26:57 by mvoisin          ###   ########.fr       */
+/*   Updated: 2025/09/28 17:02:20 by mvoisin          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@ Config::Config(const std::string& path) {
 		std::cerr << "Error: Failed to parse config file" << std::endl;
 		this->error = 1;	
 	}
-	if (serversHaveRoot() == ERROR)
+	else if (serversHaveRoot() == ERROR)
 	{
 		std::cerr << "Error: At least one server must have a root directive" << std::endl;
 		this->error = 1;

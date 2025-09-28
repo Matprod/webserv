@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerConfig.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
+/*   By: mvoisin <mvoisin@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 20:09:14 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/21 17:05:10 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/28 16:44:02 by mvoisin          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,11 +16,14 @@
 #include <vector>
 #include <map>
 #include <set>
+
+#define MAX_BODY_SIZE 1048576
 class LocationConfig;
 
 class ServerConfig {
 public:
 	int port;
+	int countport;
 	std::string host;
 	std::vector<std::string> server_names;
 	std::string root;

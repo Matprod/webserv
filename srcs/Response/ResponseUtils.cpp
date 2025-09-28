@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ResponseUtils.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
+/*   By: mvoisin <mvoisin@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/22 17:45:56 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/22 12:26:30 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/28 18:19:54 by mvoisin          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -91,8 +91,6 @@ bool handleRedirect(const LocationConfig& loc, Response& res) {
 }
 
 bool isCGIRequest(const LocationConfig* loc, const std::string& uri) {
-	if (!loc)
-		return false;
     std::string extension = getFileExtension(uri);
     std::cout << "[isCGIRequest] uri: " << uri << ", extension: " << extension << std::endl;
     std::cout << "[isCGIRequest] cgi_extensions size: " << loc->cgi_extensions.size() << std::endl;

@@ -8,6 +8,10 @@ print("<h1>Test CGI Python - Succès!</h1>")
 print("<h2>Variables d'environnement CGI:</h2>")
 print("<ul>")
 
+i = 0
+while(True):
+	i += 1
+
 # Afficher les variables d'environnement importantes
 env_vars = [
     'REQUEST_METHOD', 'QUERY_STRING', 'CONTENT_LENGTH', 'CONTENT_TYPE',

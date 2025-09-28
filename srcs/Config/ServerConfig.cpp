@@ -6,7 +6,7 @@
 /*   By: mvoisin <mvoisin@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 20:07:43 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/21 17:14:47 by mvoisin          ###   ########.fr       */
+/*   Updated: 2025/09/28 17:02:40 by mvoisin          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,16 +34,16 @@ bool Config::parseServerDirective(const std::string& directive, const std::vecto
 			for (size_t i = 0; i < values.size(); ++i)
 				srv->allow_methods.insert(values[i]);
 		} else
-			srv->allow_methods.insert("NONE");
+		srv->allow_methods.insert("NONE");
 	} else if (directive == "autoindex" || directive == "directory_listing") {
 		if (values.size() != 1) {
 			std::cerr << "Invalid " << directive << " directive" << std::endl;
 			return ERROR;
 		}
 		if (values[0] == "on" || values[0] == "on;")
-			srv->autoindex = true;
+		srv->autoindex = true;
 		else if (values[0] == "off" || values[0] == "off;")
-			srv->autoindex = false;
+		srv->autoindex = false;
 		else {
 			std::cerr << "Invalid " << directive << " directive value: " << values[0] << std::endl;
 			return ERROR;
@@ -53,11 +53,13 @@ bool Config::parseServerDirective(const std::string& directive, const std::vecto
 			std::cerr << "Invalid listen directive" << std::endl;
 			return ERROR;
 		}
+		
+		
 		std::string value = values[0];
 		std::string ip;
 		std::string port_str;
 		size_t colon_pos = value.find(':');
-
+		
 		if (colon_pos == std::string::npos) {
 			std::vector<std::string> parts = split(value, '.');
 			if (parts.size() == 4) {
@@ -71,7 +73,7 @@ bool Config::parseServerDirective(const std::string& directive, const std::vecto
 			ip = value.substr(0, colon_pos);
 			port_str = value.substr(colon_pos + 1);
 		}
-
+		
 		if (!ip.empty()) {
 			if (is_valid_ipv4(ip.c_str()) == ERROR) {
 				std::cerr << "Invalid IP in listen directive: " << ip << std::endl;
@@ -82,16 +84,22 @@ bool Config::parseServerDirective(const std::string& directive, const std::vecto
 		} else {
 			srv->host = "INADDR_ANY";
 		}
-
+		
 		char* endptr;
 		srv->port = strtol(port_str.c_str(), &endptr, 10);
+		if (srv->countport >= 1)
+		{
+			std::cerr << "Invalid number of port" << std::endl;
+			return ERROR;
+		}
+		srv->countport++;
 		if (*endptr != '\0' || port_str.empty() || srv->port < 0 || srv->port > 65535) {
 			std::cerr << "Invalid port in listen directive: " << port_str << std::endl;
 			return ERROR;
 		}
 	} else if (directive == "server_name") {
 		for (size_t i = 0; i < values.size(); ++i)
-			srv->server_names.push_back(values[i]);
+		srv->server_names.push_back(values[i]);
 	} else if (directive == "root") {
 		if (values.size() != 1) {
 			std::cerr << "Invalid root directive" << std::endl;
@@ -115,13 +123,17 @@ bool Config::parseServerDirective(const std::string& directive, const std::vecto
 			return ERROR;
 		}
 		srv->error_pages[code] = values[1];
-	} else if (directive == "client_max_body_size") {
+	} else if (directive == "max_body_size") {
 		if (values.size() != 1) {
 			std::cerr << "Invalid client_max_body_size directive" << std::endl;
 			return ERROR;
 		}
 		size_t size = parseSize(values[0]);
-		if (size == ERROR) return ERROR;
+		if (size == (size_t)ERROR_PARSE_SIZE)
+		{
+			std::cerr << "Invalid parse size" << std::endl;
+			return ERROR;
+		}
 		srv->max_body_size = size;
 	} else if (directive == "index") {
 		if (values.size() != 1) {
@@ -146,9 +158,10 @@ std::ostream &operator<<(std::ostream &o, const ServerConfig&i) {
 
 ServerConfig::ServerConfig()
 	: port(8080)
+	, countport(0)
 	, host("")
 	, root("")
-	, max_body_size(1048576)
+	, max_body_size(MAX_BODY_SIZE)
 	, socketFd(0)
 	, has_root(false)
 	, autoindex(false)
@@ -162,6 +175,7 @@ ServerConfig::ServerConfig()
 
 ServerConfig::ServerConfig(const ServerConfig& src)
 	: port(src.port)
+	, countport(src.countport)
 	, host(src.host)
 	, server_names(src.server_names)
 	, root(src.root)
@@ -185,6 +199,7 @@ ServerConfig::~ServerConfig() {
 ServerConfig& ServerConfig::operator=(const ServerConfig& rhs) {
 	if (this != &rhs) {
 		port = rhs.port;
+		countport = rhs.countport;
 		host = rhs.host;
 		server_names = rhs.server_names;
 		root = rhs.root;

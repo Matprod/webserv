@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
+/*   By: mvoisin <mvoisin@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 17:04:21 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/20 15:29:24 by allan            ###   ########.fr       */
+/*   Updated: 2025/09/28 16:16:56 by mvoisin          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,8 +14,6 @@
 
 #include "../../includes/Webserv.hpp"
 #include "RequestBody.hpp"
-
-#define MAX_BODY_SIZE 1048576 // 1 Mo max
 
 enum RequestStatus {
 	REQUEST_OK = 0,

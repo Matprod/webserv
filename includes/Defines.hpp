@@ -39,7 +39,9 @@
 #define MAX_EVENTS 100
 
 #define ERROR 1
+#define ERROR_PARSE_SIZE -1
 #define SUCCESS 0
 #define DEFAULT_PORT "8080"
+#define ERROR_MAX_BODY_LENGTH -42
 
 #endif // DEFINE_HPP

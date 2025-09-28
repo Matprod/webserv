@@ -14,7 +14,6 @@ for var in REQUEST_METHOD QUERY_STRING CONTENT_LENGTH CONTENT_TYPE SCRIPT_NAME S
 done
 
 echo "</ul>"
-
 # Afficher les données POST si présentes
 if [ "$REQUEST_METHOD" = "POST" ]; then
     if [ -n "$CONTENT_LENGTH" ] && [ "$CONTENT_LENGTH" -gt 0 ]; then

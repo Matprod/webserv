@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
+/*   By: mvoisin <mvoisin@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:44:20 by allan             #+#    #+#             */
-/*   Updated: 2025/09/22 12:31:43 by adebert          ###   ########.fr       */
+/*   Updated: 2025/09/28 16:35:26 by mvoisin          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -112,9 +112,9 @@ int parse_request(int socket, Request& req, std::map<int, std::string>& buffers,
 	if (!is_chunked && req.headers.count("content-length")) {
 		char* endptr;
 		long len = strtol(req.headers["content-length"].c_str(), &endptr, 10);
-		if (*endptr != '\0' || len < 0 || len > MAX_BODY_SIZE) {
+		if (*endptr != '\0' || len < 0 || (unsigned)len > req.config->max_body_size) {
 			std::cerr << "Content-Length invalide or too big\n";
-			return REQUEST_ERROR;
+			return ERROR_MAX_BODY_LENGTH;
 		}
 		content_length = static_cast<size_t>(len);
 	}
