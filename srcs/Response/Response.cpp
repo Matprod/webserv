@@ -23,7 +23,6 @@ Response buildResponse(const Request& request, const std::vector<ServerConfig>& 
 	
 	if (isCGIRequest(loc, request.uri))
 	{
-		std::cout << "TESTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTt\n" << std::endl;
 		return executeCGI(request, loc, request.config);	
 	}
 	
