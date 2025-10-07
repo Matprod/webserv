@@ -3,18 +3,18 @@
 /*                                                        :::      ::::::::   */
 /*   EffectiveRoute.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
+/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/10 14:20:55 by adebert           #+#    #+#             */
-/*   Updated: 2025/09/24 13:39:13 by allan            ###   ########.fr       */
+/*   Updated: 2025/10/07 17:30:49 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "EffectiveRoute.hpp"
 
 bool EffectiveRoute::createEffectiveRoute(const ServerConfig* srv, const LocationConfig* loc) {
-	std::cout << "USE LOCATION" << std::endl;	
-	std::cout << *loc << std::endl;	
+	//std::cout << "USE LOCATION" << std::endl;	
+	//std::cout << *loc << std::endl;	
 	
 	server = srv;
 	location = loc;
@@ -153,7 +153,7 @@ int EffectiveRoute::isValidPath(void) {
 		toCheck = uri.substr(0, SlashPos);
 	}
 	
-	std::cout << "URI CHECKED:\t" << toCheck << std::endl;
+	//std::cout << "URI CHECKED:\t" << toCheck << std::endl;
 	
 	
 	struct stat st;

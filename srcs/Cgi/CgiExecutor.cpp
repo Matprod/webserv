@@ -95,9 +95,9 @@ std::string readCgiOutput(int fd) {
 }
 
 void parseCgiResponse(const std::string& cgiOutput, Response& res) {
-    std::cout << "=== CGI OUTPUT DEBUG ===" << std::endl;
+/*     std::cout << "=== CGI OUTPUT DEBUG ===" << std::endl;
     std::cout << "Raw output length: " << cgiOutput.length() << std::endl;
-    std::cout << "First 200 chars: " << cgiOutput.substr(0, 200) << std::endl;
+    std::cout << "First 200 chars: " << cgiOutput.substr(0, 200) << std::endl; */
     
     // Chercher la fin des headers (double CRLF ou double LF)
     size_t header_end = cgiOutput.find("\r\n\r\n");
@@ -110,7 +110,7 @@ void parseCgiResponse(const std::string& cgiOutput, Response& res) {
         header_end += 4; // Compenser pour \r\n\r\n
     }
 
-    std::cout << "Header end position: " << header_end << std::endl;
+    //std::cout << "Header end position: " << header_end << std::endl;
     
     if (header_end == std::string::npos) {
         // Pas de headers CGI, traiter comme du contenu brut
@@ -213,7 +213,7 @@ Response executeCGI(const Request& req, const LocationConfig* loc, const ServerC
 	std::string pathInfo = getPathInfo(req.uri, loc->path, scriptName);
 	std::string queryString = getQueryString(req.uri);
 	
-	std::cout << "CGI DEBUG:" << std::endl;
+/* 	std::cout << "CGI DEBUG:" << std::endl;
 	std::cout << "  Extension: " << extension << std::endl;
 	std::cout << "  CGI Program: " << cgiProgram << std::endl;
 	std::cout << "  Script Name: " << scriptName << std::endl;
@@ -221,7 +221,7 @@ Response executeCGI(const Request& req, const LocationConfig* loc, const ServerC
 	std::cout << "  Server Root: " << server->root << std::endl;
 	std::cout << "  Used Root: " << rootPath << std::endl;
 	std::cout << "  Script Path: " << scriptPath << std::endl;
-
+ */
 	// Vérifier que le script existe et est exécutable
 	if (access(scriptPath.c_str(), F_OK) != 0) {
 		res.statusCode = 404;

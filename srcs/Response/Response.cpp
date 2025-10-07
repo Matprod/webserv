@@ -14,7 +14,7 @@
 
 Response buildResponse(const Request& request) {
 	std::cout << "\n\n\n--------------------------------------------\n" << std::endl;
-	std::cout << "NEW REQUEST:\n" << std::endl;
+	//std::cout << "NEW REQUEST:\n" << std::endl;
 	
 	Response res;
 	bool use_location = false;
@@ -22,10 +22,7 @@ Response buildResponse(const Request& request) {
 	LocationConfig* loc = getMatchingLocation(request, request.config, res, use_location);
 	
 	if (isCGIRequest(loc, request.uri))
-	{
-		std::cout << "TESTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTt\n" << std::endl;
 		return executeCGI(request, loc, request.config);	
-	}
 	
 	EffectiveRoute eff;
 	eff.getMethod = request.method == "GET" ? true : false;
@@ -472,6 +469,8 @@ int File::checkContentType(const std::string &contentType) const {
 	else if (contentType.size() == 16 && contentType.compare(0, 18, "application/json") == 0)
 		return SUCCESS;
 	else if (contentType.size() == 10 && contentType.compare(0, 12, "text/plain") == 0)
+		return SUCCESS;
+	else if (contentType.size() == 10 && contentType.compare(0, 12, "plain/text") == 0)
 		return SUCCESS;
 	return ERROR;
 }

@@ -140,72 +140,6 @@
         padding: 0 0.35rem;
         border-radius: 6px;
       }
-
-      /* CGI Testing Styles */
-      .cgi-controls {
-        margin-bottom: 1rem;
-      }
-      .cgi-buttons {
-        display: flex;
-        gap: 0.5rem;
-        margin-top: 0.5rem;
-        flex-wrap: wrap;
-      }
-      .btn-primary {
-        background: var(--accent);
-        color: white;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight: 500;
-      }
-      .btn-primary:hover {
-        background: #3b82f6;
-      }
-      .btn-secondary {
-        background: #1f2937;
-        color: var(--fg);
-        border: 1px solid #374151;
-        padding: 0.4rem 0.8rem;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 0.9rem;
-      }
-      .btn-secondary:hover {
-        background: #374151;
-      }
-      .cgi-results {
-        margin-top: 1rem;
-      }
-      .cgi-result {
-        background: #0b1220;
-        border: 1px solid #1f2937;
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-      }
-      .cgi-result.success {
-        border-left: 4px solid var(--ok);
-      }
-      .cgi-result.error {
-        border-left: 4px solid var(--err);
-      }
-      .cgi-result h4 {
-        margin: 0 0 0.5rem 0;
-        color: var(--fg);
-        font-size: 1rem;
-      }
-      .cgi-result pre {
-        background: #000;
-        padding: 0.75rem;
-        border-radius: 4px;
-        overflow-x: auto;
-        font-size: 0.85rem;
-        margin: 0.5rem 0 0 0;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-      }
     </style>
   </head>
   <body>
@@ -293,32 +227,6 @@
             <span class="pill">DELETE</span>
           </div>
         </section>
-
-        <section class="card">
-          <h1>CGI Testing</h1>
-          <h2>Test your CGI scripts</h2>
-
-          <div class="cgi-controls">
-            <button id="test-all-cgi" class="btn-primary">
-              Test All CGI Scripts
-            </button>
-            <div class="cgi-buttons">
-              <button id="test-python" class="btn-secondary">Python</button>
-              <button id="test-php" class="btn-secondary">PHP</button>
-              <button id="test-shell" class="btn-secondary">Shell</button>
-              <button id="test-simple" class="btn-secondary">Simple</button>
-            </div>
-          </div>
-
-          <div id="cgi-status" class="status"></div>
-          <div id="cgi-results" class="cgi-results"></div>
-
-          <div class="footer">
-            Test your CGI scripts: Python, PHP, Shell, and Simple Python test.
-            <span class="pill">CGI</span> <span class="pill">Python</span>
-            <span class="pill">PHP</span> <span class="pill">Shell</span>
-          </div>
-        </section>
       </div>
     </div>
 
@@ -334,7 +242,7 @@
       getForm.addEventListener("submit", (e) => {
         e.preventDefault();
         const path = normalizePath(getPath.value);
-        getFrame.src = path; // Let the browser render HTML listings naturally
+        getFrame.src = path;
         getStatus.className = "status";
         fetch(path, { method: "GET", cache: "no-store" })
           .then(async (res) => {
@@ -437,88 +345,6 @@
       function truncate(s) {
         return s.length > 160 ? s.slice(0, 157) + "…" : s;
       }
-
-      // --- CGI TESTING ---
-      const cgiStatus = $("#cgi-status");
-      const cgiResults = $("#cgi-results");
-
-      // Test CGI scripts
-      async function testCGI(scriptName, description) {
-        setStatus(cgiStatus, `Testing ${scriptName}...`);
-        try {
-          const response = await fetch(scriptName);
-          const text = await response.text();
-          const isSuccess = response.ok;
-
-          const resultDiv = document.createElement("div");
-          resultDiv.className = `cgi-result ${isSuccess ? "success" : "error"}`;
-          resultDiv.innerHTML = `
-            <h4>${description} (${scriptName})</h4>
-            <div class="status ${isSuccess ? "ok" : "err"}">Status: ${
-            response.status
-          } ${response.statusText}</div>
-            <pre>${text}</pre>
-          `;
-          cgiResults.appendChild(resultDiv);
-
-          setStatus(
-            cgiStatus,
-            `Tested ${scriptName} - ${isSuccess ? "Success" : "Failed"}`,
-            !isSuccess
-          );
-        } catch (error) {
-          const resultDiv = document.createElement("div");
-          resultDiv.className = "cgi-result error";
-          resultDiv.innerHTML = `
-            <h4>${description} (${scriptName})</h4>
-            <div class="status err">Error: ${error.message}</div>
-          `;
-          cgiResults.appendChild(resultDiv);
-
-          setStatus(
-            cgiStatus,
-            `Error testing ${scriptName}: ${error.message}`,
-            true
-          );
-        }
-      }
-
-      // Test all CGI scripts
-      document
-        .getElementById("test-all-cgi")
-        .addEventListener("click", async () => {
-          cgiResults.innerHTML = "";
-          setStatus(cgiStatus, "Starting CGI tests...");
-
-          await testCGI("test_cgi.py", "Python CGI Script");
-          await testCGI("test_cgi.php", "PHP CGI Script");
-          await testCGI("test_cgi.sh", "Shell CGI Script");
-          await testCGI("simple_test.py", "Simple Python Test");
-
-          setStatus(cgiStatus, "All CGI tests completed!");
-        });
-
-      // Test individual scripts
-      document
-        .getElementById("test-python")
-        .addEventListener("click", () =>
-          testCGI("test_cgi.py", "Python CGI Script")
-        );
-      document
-        .getElementById("test-php")
-        .addEventListener("click", () =>
-          testCGI("test_cgi.php", "PHP CGI Script")
-        );
-      document
-        .getElementById("test-shell")
-        .addEventListener("click", () =>
-          testCGI("test_cgi.sh", "Shell CGI Script")
-        );
-      document
-        .getElementById("test-simple")
-        .addEventListener("click", () =>
-          testCGI("simple_test.py", "Simple Python Test")
-        );
     </script>
   </body>
 </html>

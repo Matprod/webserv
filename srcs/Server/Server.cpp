@@ -6,7 +6,7 @@
 /*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:29:23 by allan             #+#    #+#             */
-/*   Updated: 2025/10/07 16:03:54 by adebert          ###   ########.fr       */
+/*   Updated: 2025/10/07 17:23:48 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,7 +75,7 @@ void serverLoop(const std::vector<ServerConfig>& servers) {
 				if (isServerFd[fds[i].fd]) {
 					const ServerConfig *config = pollFdToServerConfig[fds[i].fd];
 					if (!config) {
-						std::cerr << "ERROR POINTER 1" << std::endl;
+						std::cerr << "Error Poll" << std::endl;
 						exit(1);
 					}
 					handle_new_connection(fds[i].fd, config, fds, isServerFd, lastActivity, clientFdToServerConfig);
@@ -84,7 +84,7 @@ void serverLoop(const std::vector<ServerConfig>& servers) {
 					Request req;
 					req.config = clientFdToServerConfig[fds[i].fd];
 					if (!req.config) {
-						std::cerr << "ERROR POINTER 1" << std::endl;
+						std::cerr << "Error Poll" << std::endl;
 						exit(1);
 					}
 				 	int parse_status = handle_client_request(fds[i].fd, fds, i, isServerFd, clientBuffers, lastActivity, req, clientFdToServerConfig);

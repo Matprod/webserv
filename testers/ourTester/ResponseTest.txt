@@ -68,3 +68,15 @@ seq 1 200 | xargs -n1 -P 50 curl -sS -X DELETE http://localhost:3434/upload/to-d
 
 
 --------------------------------------------------------
+
+
+4 - MAX body
+curl -sS -X POST http://localhost:8080/upload/c.txt -H "Content-Type: text/plain" -d "hello"
+
+5 - SIEGE 
+siege -b -c 10 -t 30s "http://127.0.0.1:3434/upload POST < /home/adebert/Project/webserv/srv/www/100kb.bin"
+
+6 - CGI
+http://localhost:8080/test_cgi.py
+http://localhost:9090/test_cgi.php
+
