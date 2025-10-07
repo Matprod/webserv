@@ -12,7 +12,7 @@
 
 #include "Response.hpp"
 
-Response buildResponse(const Request& request, const std::vector<ServerConfig>& servers) {
+Response buildResponse(const Request& request) {
 	std::cout << "\n\n\n--------------------------------------------\n" << std::endl;
 	std::cout << "NEW REQUEST:\n" << std::endl;
 	
@@ -22,10 +22,7 @@ Response buildResponse(const Request& request, const std::vector<ServerConfig>& 
 	LocationConfig* loc = getMatchingLocation(request, request.config, res, use_location);
 	
 	if (isCGIRequest(loc, request.uri))
-	{
-		std::cout << "TESTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTt\n" << std::endl;
 		return executeCGI(request, loc, request.config);	
-	}
 	
 	EffectiveRoute eff;
 	eff.getMethod = request.method == "GET" ? true : false;
@@ -708,7 +705,7 @@ void Response::setDefaultErrorPage() {
 }
 
 Response::Response()
-	: closingConnection(false), statusCode(0), statusMessage(""), version("HTTP/1.1"), body("")
+	: version("HTTP/1.1"), statusCode(0), statusMessage(""),  body(""), closingConnection(false)
 {
 	headers.clear();
 }
