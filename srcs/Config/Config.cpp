@@ -6,7 +6,7 @@
 /*   By: mvoisin <mvoisin@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/22 11:00:25 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/28 17:02:20 by mvoisin          ###   ########.fr       */
+/*   Updated: 2025/10/07 15:18:25 by mvoisin          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@ Config::Config(const std::string& path) {
 	this->error = 0;
 	if (parseFile(path) == ERROR)
 	{
-		std::cerr << "Error: Failed to parse config file" << std::endl;
+		std::cerr << "Error: Failed to parse the config file" << std::endl;
 		this->error = 1;	
 	}
 	else if (serversHaveRoot() == ERROR)
