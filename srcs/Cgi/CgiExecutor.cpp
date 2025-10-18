@@ -12,9 +12,15 @@
 
 #include "CgiExecutor.hpp"
 #include "../Response/Response.hpp"
+#include <fcntl.h>
+#include <signal.h>
+#include <cerrno>
+#include <cstring>
+#include <sstream>
 
 // Définition de la map globale pour les processus CGI
-std::map<pid_t, CgiProcess> g_cgiProcesses;
+// Clé = pipe_out_read fd (le fd surveillé par poll)
+std::map<int, CgiProcess> g_cgiProcesses;
 
 std::string getFileExtension(const std::string& uri) {
 	size_t dot_pos = uri.find_last_of('.');
@@ -81,22 +87,47 @@ LocationConfig* findMatchingLocation(const std::string& uri, const std::vector<L
 	return best_match;
 }
 
-std::string readCgiOutput(int fd) {
-	std::string output;
-	char buffer[4096];
-	ssize_t bytesRead;
 
-	while ((bytesRead = read(fd, buffer, sizeof(buffer))) > 0) {
-		output.append(buffer, bytesRead);
+// =============================================================================
+// HELPERS INTERNES
+// =============================================================================
+
+void prepareCGIEnvironment(std::vector<std::string>& env_vars, const Request& req, 
+                          const std::string& scriptName, const std::string& scriptPath,
+                          const std::string& queryString, const std::string& pathInfo,
+                          const LocationConfig* loc, const ServerConfig* server) {
+	// Variables CGI obligatoires (RFC 3875)
+	env_vars.push_back("REQUEST_METHOD=" + req.method);
+	env_vars.push_back("QUERY_STRING=" + queryString);
+	env_vars.push_back("CONTENT_LENGTH=" + toString<size_t>(req.body.size()));
+	env_vars.push_back("CONTENT_TYPE=" + (req.headers.count("content-type") ? req.headers.at("content-type") : ""));
+	env_vars.push_back("SCRIPT_NAME=" + scriptName);
+	env_vars.push_back("SCRIPT_FILENAME=" + scriptPath);
+	env_vars.push_back("PATH_INFO=" + pathInfo);
+	env_vars.push_back("PATH_TRANSLATED=" + loc->root + pathInfo);
+	env_vars.push_back("SERVER_NAME=" + (server->server_names.empty() ? "localhost" : server->server_names[0]));
+	env_vars.push_back("SERVER_PORT=" + toString<int>(server->port));
+	env_vars.push_back("SERVER_PROTOCOL=HTTP/1.1");
+	env_vars.push_back("GATEWAY_INTERFACE=CGI/1.1");
+	env_vars.push_back("REDIRECT_STATUS=200");
+	env_vars.push_back("SERVER_SOFTWARE=webserv/1.0");
+	
+	// Ajouter les headers HTTP comme variables d'environnement
+	for (std::map<std::string, std::string>::const_iterator it = req.headers.begin(); 
+	     it != req.headers.end(); ++it) {
+		std::string env_name = "HTTP_" + to_lower(it->first);
+		// Remplacer les tirets par des underscores
+		for (size_t i = 0; i < env_name.length(); ++i) {
+			if (env_name[i] == '-') 
+				env_name[i] = '_';
+		}
+		env_vars.push_back(env_name + "=" + it->second);
 	}
-
-	if (bytesRead < 0) {
-		perror("read from CGI failed");
-		return "";
-	}
-
-	return output;
 }
+
+// =============================================================================
+// PARSING DE LA REPONSE CGI
+// =============================================================================
 
 void parseCgiResponse(const std::string& cgiOutput, Response& res) {
 /*     std::cout << "=== CGI OUTPUT DEBUG ===" << std::endl;
@@ -183,36 +214,31 @@ void parseCgiResponse(const std::string& cgiOutput, Response& res) {
 	}
 }
 
-// Fonction pour exécuter CGI de manière synchrone avec timeout
-Response executeCGI(const Request& req, const LocationConfig* loc, const ServerConfig* server, int clientFd) {
-	(void)clientFd; // Paramètre pour compatibilité future avec gestion asynchrone
-	Response res;
-	res.version = "HTTP/1.1";
 
+// =============================================================================
+// NOUVELLE API ASYNCHRONE
+// =============================================================================
+
+// Lance un CGI de manière asynchrone et retourne le fd du pipe à surveiller
+// Retourne -1 en cas d'erreur, le fd du pipe sinon
+int startCGIAsync(const Request& req, const LocationConfig* loc, const ServerConfig* server, int clientFd) {
 	std::string extension = getFileExtension(req.uri);
 	if (loc->cgi_extensions.find(extension) == loc->cgi_extensions.end()) {
-		res.statusCode = 404;
-		res.statusMessage = getStatusMessage(404);
-		res.body = "CGI Extension Not Supported";
-		res.headers["Content-Type"] = "text/html";
-		res.headers["Content-Length"] = toString<size_t>(res.body.size());
-		return res;
+		std::cerr << "CGI Extension Not Supported: " << extension << std::endl;
+		return -1;
 	}
 
 	std::string cgiProgram = loc->cgi_extensions.at(extension);
 	std::string scriptName = getScriptName(req.uri);
 	std::string rootPath;
+	
 	if (loc->has_root) {
 		rootPath = loc->root;
 	} else if (server->has_root) {
 		rootPath = server->root;
 	} else {
-		res.statusCode = 500;
-		res.statusMessage = getStatusMessage(500);
-		res.body = "No root directory configured";
-		res.headers["Content-Type"] = "text/html";
-		res.headers["Content-Length"] = toString<size_t>(res.body.size());
-		return res;
+		std::cerr << "No root directory configured" << std::endl;
+		return -1;
 	}
 	
 	std::string scriptPath = rootPath + "/" + scriptName;
@@ -221,45 +247,39 @@ Response executeCGI(const Request& req, const LocationConfig* loc, const ServerC
 	
 	// Vérifier que le script existe et est exécutable
 	if (access(scriptPath.c_str(), F_OK) != 0) {
-		res.statusCode = 404;
-		res.statusMessage = getStatusMessage(404);
-		res.body = "CGI Script Not Found: " + scriptPath;
-		res.headers["Content-Type"] = "text/html";
-		res.headers["Content-Length"] = toString<size_t>(res.body.size());
-		return res;
+		std::cerr << "CGI Script Not Found: " << scriptPath << std::endl;
+		return -1;
 	}
 
 	if (access(scriptPath.c_str(), X_OK) != 0) {
-		res.statusCode = 403;
-		res.statusMessage = getStatusMessage(403);
-		res.body = "CGI Script Not Executable";
-		res.headers["Content-Type"] = "text/html";
-		res.headers["Content-Length"] = toString<size_t>(res.body.size());
-		return res;
+		std::cerr << "CGI Script Not Executable: " << scriptPath << std::endl;
+		return -1;
 	}
 
 	// Créer les pipes pour la communication
 	int pipe_in[2], pipe_out[2];
 	if (pipe(pipe_in) < 0 || pipe(pipe_out) < 0) {
-		res.statusCode = 500;
-		res.statusMessage = getStatusMessage(500);
-		res.body = "Internal Server Error: Pipe Creation Failed";
-		res.headers["Content-Type"] = "text/html";
-		res.headers["Content-Length"] = toString<size_t>(res.body.size());
-		return res;
+		perror("pipe");
+		if (pipe_in[0] >= 0) { close(pipe_in[0]); close(pipe_in[1]); }
+		return -1;
+	}
+
+	// Mettre le pipe de lecture en mode non-bloquant
+	int flags = fcntl(pipe_out[0], F_GETFL, 0);
+	if (flags == -1 || fcntl(pipe_out[0], F_SETFL, flags | O_NONBLOCK) == -1) {
+		perror("fcntl O_NONBLOCK (pipe)");
+		close(pipe_in[0]); close(pipe_in[1]);
+		close(pipe_out[0]); close(pipe_out[1]);
+		return -1;
 	}
 
 	// Fork pour créer le processus CGI
 	pid_t pid = fork();
 	if (pid < 0) {
-		res.statusCode = 500;
-		res.statusMessage = getStatusMessage(500);
-		res.body = "Internal Server Error: Fork Failed";
+		perror("fork");
 		close(pipe_in[0]); close(pipe_in[1]);
 		close(pipe_out[0]); close(pipe_out[1]);
-		res.headers["Content-Type"] = "text/html";
-		res.headers["Content-Length"] = toString<size_t>(res.body.size());
-		return res;
+		return -1;
 	}
 
 	if (pid == 0) {
@@ -275,32 +295,7 @@ Response executeCGI(const Request& req, const LocationConfig* loc, const ServerC
 
 		// Préparer les variables d'environnement CGI
 		std::vector<std::string> env_vars;
-		
-		// Variables CGI obligatoires
-		env_vars.push_back("REQUEST_METHOD=" + req.method);
-		env_vars.push_back("QUERY_STRING=" + queryString);
-		env_vars.push_back("CONTENT_LENGTH=" + toString<size_t>(req.body.size()));
-		env_vars.push_back("CONTENT_TYPE=" + (req.headers.count("content-type") ? req.headers.at("content-type") : ""));
-		env_vars.push_back("SCRIPT_NAME=" + scriptName);
-		env_vars.push_back("SCRIPT_FILENAME=" + scriptPath);
-		env_vars.push_back("PATH_INFO=" + pathInfo);
-		env_vars.push_back("PATH_TRANSLATED=" + loc->root + pathInfo);
-		env_vars.push_back("SERVER_NAME=" + (server->server_names.empty() ? "localhost" : server->server_names[0]));
-		env_vars.push_back("SERVER_PORT=" + toString<int>(server->port));
-		env_vars.push_back("SERVER_PROTOCOL=HTTP/1.1");
-		env_vars.push_back("GATEWAY_INTERFACE=CGI/1.1");
-		env_vars.push_back("REDIRECT_STATUS=200");
-		env_vars.push_back("SERVER_SOFTWARE=webserv/1.0");
-		
-		// Ajouter les headers HTTP comme variables d'environnement
-		for (std::map<std::string, std::string>::const_iterator it = req.headers.begin(); it != req.headers.end(); ++it) {
-			std::string env_name = "HTTP_" + to_lower(it->first);
-			// Remplacer les tirets par des underscores
-			for (size_t i = 0; i < env_name.length(); ++i) {
-				if (env_name[i] == '-') env_name[i] = '_';
-			}
-			env_vars.push_back(env_name + "=" + it->second);
-		}
+		prepareCGIEnvironment(env_vars, req, scriptName, scriptPath, queryString, pathInfo, loc, server);
 
 		// Convertir en char* pour execve
 		std::vector<char*> envp;
@@ -320,7 +315,7 @@ Response executeCGI(const Request& req, const LocationConfig* loc, const ServerC
 		exit(1);
 	}
 
-	// Processus parent - gérer la communication avec le CGI
+	// Processus parent - configuration de la structure CGI
 	
 	// Fermer les extrémités inutiles des pipes
 	close(pipe_in[0]);  // On n'a pas besoin de lire depuis stdin du CGI
@@ -333,70 +328,167 @@ Response executeCGI(const Request& req, const LocationConfig* loc, const ServerC
 			std::cerr << "Failed to write to CGI stdin" << std::endl;
 		}
 	}
-	close(pipe_in[1]);
+	close(pipe_in[1]); // Fermer stdin du CGI après écriture
 
-	// Ne PAS attendre - le CGI va s'exécuter en arrière-plan
-	// On ferme juste notre copie du pipe de sortie que le CGI utilise
-	close(pipe_out[1]);
+	// Créer et stocker la structure CGI
+	CgiProcess cgiProc;
+	cgiProc.pid = pid;
+	cgiProc.clientFd = clientFd;
+	cgiProc.startTime = time(NULL);
+	cgiProc.pipe_out_read = pipe_out[0];
+	cgiProc.request = req;
+	cgiProc.location = loc;
+	cgiProc.server = server;
+	cgiProc.isComplete = false;
+	cgiProc.headersSent = false;
 	
-	// Timeout de 5 secondes pour les CGI
-	// ATTENTION: Le serveur bloquera jusqu'à 5 secondes pendant l'exécution du CGI
-	// Si le CGI ne finit pas en 5s, on retourne 504 Gateway Timeout
-	fd_set readfds;
-	struct timeval tv;
-	FD_ZERO(&readfds);
-	FD_SET(pipe_out[0], &readfds);
-	tv.tv_sec = 5;
-	tv.tv_usec = 0; // 5 secondes timeout
+	g_cgiProcesses[pipe_out[0]] = cgiProc;
 	
-	int select_result = select(pipe_out[0] + 1, &readfds, NULL, NULL, &tv);
+	std::cout << "CGI started: pid=" << pid << ", pipe_fd=" << pipe_out[0] << ", client_fd=" << clientFd << std::endl;
 	
-	if (select_result > 0) {
-		// Des données sont disponibles, lire
-		std::string cgiOutput = readCgiOutput(pipe_out[0]);
-		close(pipe_out[0]);
-		
-		// Attendre le processus (non-bloquant)
-		int status;
-		int wait_result = waitpid(pid, &status, WNOHANG);
-		
-		if (wait_result > 0 && WIFEXITED(status) && WEXITSTATUS(status) == 0) {
-			parseCgiResponse(cgiOutput, res);
-		} else {
-			res.statusCode = 500;
-			res.statusMessage = getStatusMessage(500);
-			res.body = "CGI Execution Failed";
-			res.headers["Content-Type"] = "text/html";
-			res.headers["Content-Length"] = toString<size_t>(res.body.size());
-		}
-	} else {
-		// Le CGI n'a pas fini dans le timeout de 5 secondes
-		// Tuer le processus CGI
-		kill(pid, SIGKILL);
-		waitpid(pid, NULL, 0); // Attendre que le processus soit tué
-		close(pipe_out[0]);
-		
-		// Retourner une erreur 504 Gateway Timeout
-		res.statusCode = 504;
-		res.statusMessage = "Gateway Timeout";
-		res.body = "<html><body><h1>504 Gateway Timeout</h1><p>The CGI script took too long to execute (>5 seconds).</p></body></html>";
-		res.headers["Content-Type"] = "text/html";
-		res.headers["Content-Length"] = toString<size_t>(res.body.size());
-	}
-
-	return res;
+	return pipe_out[0]; // Retourner le fd à surveiller
 }
 
-// Fonction pour vérifier l'état des processus CGI (pour nettoyage futur)
-void checkCgiProcesses() {
-	// Pour l'instant, juste nettoyer les processus zombies
+// Lit les données disponibles sur le pipe CGI (appelée par poll)
+void handleCGIReadEvent(int pipe_fd) {
+	std::map<int, CgiProcess>::iterator it = g_cgiProcesses.find(pipe_fd);
+	if (it == g_cgiProcesses.end()) {
+		std::cerr << "handleCGIReadEvent: CGI process not found for pipe_fd=" << pipe_fd << std::endl;
+		return;
+	}
+	
+	CgiProcess& cgiProc = it->second;
+	
+	// Lire TOUTES les données disponibles en boucle
+	while (true) {
+		char buffer[CGI_BUFFER_SIZE];
+		ssize_t bytesRead = read(pipe_fd, buffer, sizeof(buffer));
+		
+		if (bytesRead > 0) {
+			cgiProc.cgiOutput.append(buffer, bytesRead);
+		} else if (bytesRead == 0) {
+			// EOF - le CGI a fermé son stdout
+			cgiProc.isComplete = true;
+			std::cout << "CGI completed: pid=" << cgiProc.pid << ", output_size=" << cgiProc.cgiOutput.size() << std::endl;
+			break;
+		} else {
+			// Erreur de lecture ou EAGAIN
+			if (errno == EAGAIN || errno == EWOULDBLOCK) {
+				// Plus de données disponibles pour le moment
+				break;
+			} else {
+				std::cerr << "Error reading from CGI pipe: " << strerror(errno) << std::endl;
+				cgiProc.isComplete = true;
+				break;
+			}
+		}
+	}
+}
+
+// Vérifie les timeouts des CGI (appelée périodiquement)
+void checkCGITimeouts() {
+	time_t now = time(NULL);
+	std::vector<int> toCleanup;
+	
+	for (std::map<int, CgiProcess>::iterator it = g_cgiProcesses.begin(); it != g_cgiProcesses.end(); ++it) {
+		CgiProcess& cgiProc = it->second;
+		
+		// Vérifier le timeout configuré
+		if (!cgiProc.isComplete && (now - cgiProc.startTime) > CGI_TIMEOUT) {
+			std::cout << "CGI timeout: pid=" << cgiProc.pid << std::endl;
+			
+			// Tuer le processus
+			kill(cgiProc.pid, SIGKILL);
+			
+			// Marquer comme complete avec erreur
+			cgiProc.isComplete = true;
+			cgiProc.cgiOutput = ""; // Vider la sortie
+			
+			toCleanup.push_back(it->first);
+		}
+	}
+	
+	// Nettoyer les processus CGI zombies
 	int status;
 	while (waitpid(-1, &status, WNOHANG) > 0) {
 		// Processus nettoyé
 	}
 }
 
-// Fonction pour nettoyer un processus CGI
-void cleanupCgiProcess(pid_t pid) {
-	(void)pid; // Non utilisé pour l'instant
+// Nettoie un processus CGI
+void cleanupCGIProcess(int pipe_fd) {
+	std::map<int, CgiProcess>::iterator it = g_cgiProcesses.find(pipe_fd);
+	if (it == g_cgiProcesses.end()) {
+		return;
+	}
+	
+	CgiProcess& cgiProc = it->second;
+	
+	// Fermer le pipe
+	if (cgiProc.pipe_out_read >= 0) {
+		close(cgiProc.pipe_out_read);
+	}
+	
+	// Attendre le processus s'il n'a pas déjà été attendu
+	int status;
+	waitpid(cgiProc.pid, &status, WNOHANG);
+	
+	std::cout << "CGI cleaned up: pid=" << cgiProc.pid << ", pipe_fd=" << pipe_fd << std::endl;
+	
+	// Supprimer de la map
+	g_cgiProcesses.erase(it);
+}
+
+// Finalise la réponse CGI
+Response finalizeCGIResponse(CgiProcess& cgiProc) {
+	Response res;
+	res.version = "HTTP/1.1";
+	
+	// Vérifier si le CGI a timeout
+	time_t now = time(NULL);
+	if ((now - cgiProc.startTime) > CGI_TIMEOUT && cgiProc.cgiOutput.empty()) {
+		res.statusCode = 504;
+		res.statusMessage = "Gateway Timeout";
+		
+		std::ostringstream body_stream;
+		body_stream << "<html><body><h1>504 Gateway Timeout</h1>"
+		            << "<p>The CGI script took too long to execute (>" << CGI_TIMEOUT << " seconds).</p>"
+		            << "</body></html>";
+		res.body = body_stream.str();
+		
+		res.headers["Content-Type"] = "text/html";
+		res.headers["Content-Length"] = toString<size_t>(res.body.size());
+		res.closingConnection = cgiProc.request.closeConnection;
+		return res;
+	}
+	
+	// Si on a reçu des données et que le pipe est fermé (isComplete), c'est probablement un succès
+	if (cgiProc.isComplete && !cgiProc.cgiOutput.empty()) {
+		// Attendre le processus pour éviter les zombies
+		int status;
+		waitpid(cgiProc.pid, &status, 0);  // Bloquant mais le processus est déjà terminé
+		
+		// Parser la réponse même si le processus a échoué, car on a des données
+		parseCgiResponse(cgiProc.cgiOutput, res);
+	} else if (cgiProc.isComplete && cgiProc.cgiOutput.empty()) {
+		// Le CGI est terminé mais n'a rien produit
+		int status;
+		waitpid(cgiProc.pid, &status, 0);
+		
+		res.statusCode = 500;
+		res.statusMessage = getStatusMessage(500);
+		res.body = "CGI produced no output";
+		res.headers["Content-Type"] = "text/html";
+		res.headers["Content-Length"] = toString<size_t>(res.body.size());
+	} else {
+		// Ne devrait pas arriver ici, mais au cas où
+		res.statusCode = 500;
+		res.statusMessage = getStatusMessage(500);
+		res.body = "CGI Execution Failed";
+		res.headers["Content-Type"] = "text/html";
+		res.headers["Content-Length"] = toString<size_t>(res.body.size());
+	}
+	
+	res.closingConnection = cgiProc.request.closeConnection;
+	return res;
 }

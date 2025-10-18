@@ -23,8 +23,8 @@ Response buildResponse(const Request& request) {
 	
 	LocationConfig* loc = getMatchingLocation(request, request.config, res, use_location);
 	
-	if (isCGIRequest(loc, request.uri))
-		return executeCGI(request, loc, request.config, -1);	
+	// NOTE: Les CGI sont maintenant gérés de manière asynchrone dans Server.cpp
+	// Cette fonction ne devrait jamais être appelée pour une requête CGI
 	
 	EffectiveRoute eff;
 	eff.getMethod = request.method == "GET" ? true : false;

@@ -22,6 +22,7 @@
 #include <iostream>
 #include <ctime>
 #include <unistd.h>
+#include <fcntl.h>
 
 void setup_pollfds(const std::vector<ServerConfig>& servers, std::vector<pollfd>& fds, std::map<int, bool>& isServerFd, std::map<int, const ServerConfig*> &pollFdToServerConfig) {
 	for (size_t i = 0; i < servers.size(); ++i) {
@@ -71,8 +72,8 @@ void serverLoop(const std::vector<ServerConfig>& servers) {
 	while (true && !g_stop) {
 		check_timeouts(fds, lastActivity, clientBuffers, isServerFd, clientFdToServerConfig);
 		
-		// Nettoyer les processus CGI zombies
-		checkCgiProcesses();
+		// Nettoyer les processus CGI zombies et gérer les timeouts
+		checkCGITimeouts();
 
 		int ready = poll(fds.data(), fds.size(), 100); // Timeout de 100ms pour rester réactif
 		if (ready < 0) {
@@ -90,14 +91,25 @@ void serverLoop(const std::vector<ServerConfig>& servers) {
 		}
 
 		for (int i = 0; i < static_cast<int>(fds.size()); ++i) {
-			// Vérifier si le client a fermé la connexion (POLLHUP) ou erreur (POLLERR)
-			if ((fds[i].revents & (POLLHUP | POLLERR)) && !isServerFd[fds[i].fd]) {
-				close_client(fds[i].fd, fds, isServerFd, clientBuffers, lastActivity, clientFdToServerConfig);
-				--i;
+			// Pour les pipes CGI, toujours essayer de lire d'abord, même en cas de POLLHUP
+			if (isCGIPipeFd(fds[i].fd) && (fds[i].revents & (POLLIN | POLLHUP | POLLERR))) {
+				// Lire toutes les données disponibles avant de traiter la fermeture
+				handleCGIPipeEvent(fds[i].fd, fds, i, isServerFd, clientBuffers, lastActivity, clientFdToServerConfig);
 				continue;
 			}
 			
+			// Vérifier si le client a fermé la connexion (POLLHUP) ou erreur (POLLERR)
+			if (fds[i].revents & (POLLHUP | POLLERR)) {
+				if (!isServerFd[fds[i].fd]) {
+					close_client(fds[i].fd, fds, isServerFd, clientBuffers, lastActivity, clientFdToServerConfig);
+					--i;
+					continue;
+				}
+			}
+			
 			if (fds[i].revents & POLLIN) {
+				
+				// Sinon, traiter normalement
 				if (isServerFd[fds[i].fd]) {
 					const ServerConfig *config = pollFdToServerConfig[fds[i].fd];
 					if (!config) {
@@ -116,26 +128,61 @@ void serverLoop(const std::vector<ServerConfig>& servers) {
 				 	int parse_status = handle_client_request(fds[i].fd, fds, i, isServerFd, clientBuffers, lastActivity, req, clientFdToServerConfig);
 					//std::cout << "REQUEST AFTER PARSER:\n" << req << std::endl;
 					if (parse_status == REQUEST_OK) {
-						// Traitement normal (CGI ou non-CGI)
-						Response res = buildResponse(req);
-						std::string rawResponse = res.responseToString();
-						std::cout << "RESPONSE:\n" << rawResponse << std::endl;
-						int result;
-						result = send(fds[i].fd, rawResponse.c_str(), rawResponse.size(), 0); //THE ONLY SEND FOR EACH CLIENT
-						if (result <= 0) {
-							std::cout << "Error Sending response" << std::endl;
-							close_client(fds[i].fd, fds, isServerFd, clientBuffers, lastActivity, clientFdToServerConfig);
-							--i;
-							continue;
-						}
+						// Vérifier si c'est une requête CGI
+						bool use_location = false;
+						Response tempRes; // Temporary response for CGI check
+						LocationConfig* loc = getMatchingLocation(req, req.config, tempRes, use_location);
 						
-						// Mettre à jour le timestamp d'activité
-						lastActivity[fds[i].fd] = time(NULL);
-						
-						if (res.closingConnection == true) {
-							close_client(fds[i].fd, fds, isServerFd, clientBuffers, lastActivity, clientFdToServerConfig);
-							--i;
-							continue;
+						if (isCGIRequest(loc, req.uri)) {
+							// Démarrer le CGI de manière asynchrone
+							std::cout << "Starting CGI asynchronously for " << req.uri << std::endl;
+							int pipe_fd = startCGIAsync(req, loc, req.config, fds[i].fd);
+							
+							if (pipe_fd < 0) {
+								// Erreur lors du démarrage du CGI, envoyer une erreur 500
+								Response res;
+								res.createResponse(500, "Failed to start CGI", req.config->error_pages);
+								std::string rawResponse = res.responseToString();
+								send(fds[i].fd, rawResponse.c_str(), rawResponse.size(), 0);
+								
+								if (res.closingConnection) {
+									close_client(fds[i].fd, fds, isServerFd, clientBuffers, lastActivity, clientFdToServerConfig);
+									--i;
+								}
+								continue;
+							}
+							
+							// Ajouter le pipe_fd aux fds surveillés par poll
+							pollfd pfd = {};
+							pfd.fd = pipe_fd;
+							pfd.events = POLLIN;
+							pfd.revents = 0;
+							fds.push_back(pfd);
+							
+							// Le client reste ouvert, en attente de la réponse du CGI
+							std::cout << "CGI pipe added to poll: " << pipe_fd << std::endl;
+						} else {
+							// Traitement normal (non-CGI)
+							Response res = buildResponse(req);
+							std::string rawResponse = res.responseToString();
+							std::cout << "RESPONSE:\n" << rawResponse << std::endl;
+							int result;
+							result = send(fds[i].fd, rawResponse.c_str(), rawResponse.size(), 0); //THE ONLY SEND FOR EACH CLIENT
+							if (result <= 0) {
+								std::cout << "Error Sending response" << std::endl;
+								close_client(fds[i].fd, fds, isServerFd, clientBuffers, lastActivity, clientFdToServerConfig);
+								--i;
+								continue;
+							}
+							
+							// Mettre à jour le timestamp d'activité
+							lastActivity[fds[i].fd] = time(NULL);
+							
+							if (res.closingConnection == true) {
+								close_client(fds[i].fd, fds, isServerFd, clientBuffers, lastActivity, clientFdToServerConfig);
+								--i;
+								continue;
+							}
 						}
 					}
 					else if (parse_status == REQUEST_INCOMPLETE) {
