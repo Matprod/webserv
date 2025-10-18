@@ -14,14 +14,15 @@
 #define RESPONSE_HPP
 
 #include <string>
-#include <iostream>
 #include <map>
 #include <sstream>
 #include <dirent.h>
 #include "../Request/Request.hpp"
-#include "../Cgi/CgiExecutor.hpp"
-#include "ResponseUtils.hpp"
 #include "EffectiveRoute.hpp"
+
+// Forward declarations pour éviter dépendances circulaires
+struct LocationConfig;
+struct ServerConfig;
 
 #define GET 1
 #define POST 2

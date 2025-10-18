@@ -13,18 +13,12 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#include <string>
-#include <iostream>
 #include <vector>
-#include <map>
-#include <poll.h>
 
-#include "../Config/Config.hpp"
-#include "../Request/Request.hpp"
-#include "../Response/Response.hpp"
-#include "Client.hpp"
+// Forward declarations
+struct ServerConfig;
 
-#define CLIENT_TIMEOUT 5
+#define CLIENT_TIMEOUT 20
 
 void serverLoop(const std::vector<ServerConfig>& servers);
 

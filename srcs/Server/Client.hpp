@@ -12,7 +12,15 @@
 
 #pragma once
 
-#include "Server.hpp"
+#include <vector>
+#include <map>
+#include <string>
+#include <ctime>
+#include <poll.h>
+
+// Forward declarations
+struct ServerConfig;
+struct Request;
 
 void handle_new_connection(int serverFd, const ServerConfig* config, std::vector<pollfd>& fds, std::map<int, bool>& isServerFd, std::map<int, time_t>& lastActivity, std::map<int, const ServerConfig*>& clientFdToServerConfig);
 void close_client(int fd, std::vector<pollfd>& fds, std::map<int, bool>& isServerFd, std::map<int, std::string>& clientBuffers, std::map<int, time_t>& lastActivity, std::map<int, const ServerConfig*>& clientFdToServerConfig);

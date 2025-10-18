@@ -11,6 +11,17 @@
 /* ************************************************************************** */
 
 #include "Server.hpp"
+#include "Client.hpp"
+#include "../Cgi/CgiExecutor.hpp"
+#include "../Response/Response.hpp"
+#include "../Response/ResponseUtils.hpp"
+#include "../Config/Config.hpp"
+#include "../Request/Request.hpp"
+#include <poll.h>
+#include <map>
+#include <iostream>
+#include <ctime>
+#include <unistd.h>
 
 void setup_pollfds(const std::vector<ServerConfig>& servers, std::vector<pollfd>& fds, std::map<int, bool>& isServerFd, std::map<int, const ServerConfig*> &pollFdToServerConfig) {
 	for (size_t i = 0; i < servers.size(); ++i) {
@@ -59,8 +70,11 @@ void serverLoop(const std::vector<ServerConfig>& servers) {
 
 	while (true && !g_stop) {
 		check_timeouts(fds, lastActivity, clientBuffers, isServerFd, clientFdToServerConfig);
+		
+		// Nettoyer les processus CGI zombies
+		checkCgiProcesses();
 
-		int ready = poll(fds.data(), fds.size(), -1);
+		int ready = poll(fds.data(), fds.size(), 100); // Timeout de 100ms pour rester réactif
 		if (ready < 0) {
 			if (errno == EINTR) {
 				if (g_stop) break;
@@ -69,8 +83,20 @@ void serverLoop(const std::vector<ServerConfig>& servers) {
 			perror("poll");
 			continue;
 		}
+		
+		if (ready == 0) {
+			// Timeout, continuer la boucle
+			continue;
+		}
 
 		for (int i = 0; i < static_cast<int>(fds.size()); ++i) {
+			// Vérifier si le client a fermé la connexion (POLLHUP) ou erreur (POLLERR)
+			if ((fds[i].revents & (POLLHUP | POLLERR)) && !isServerFd[fds[i].fd]) {
+				close_client(fds[i].fd, fds, isServerFd, clientBuffers, lastActivity, clientFdToServerConfig);
+				--i;
+				continue;
+			}
+			
 			if (fds[i].revents & POLLIN) {
 				if (isServerFd[fds[i].fd]) {
 					const ServerConfig *config = pollFdToServerConfig[fds[i].fd];
@@ -90,6 +116,7 @@ void serverLoop(const std::vector<ServerConfig>& servers) {
 				 	int parse_status = handle_client_request(fds[i].fd, fds, i, isServerFd, clientBuffers, lastActivity, req, clientFdToServerConfig);
 					//std::cout << "REQUEST AFTER PARSER:\n" << req << std::endl;
 					if (parse_status == REQUEST_OK) {
+						// Traitement normal (CGI ou non-CGI)
 						Response res = buildResponse(req);
 						std::string rawResponse = res.responseToString();
 						std::cout << "RESPONSE:\n" << rawResponse << std::endl;
@@ -101,7 +128,11 @@ void serverLoop(const std::vector<ServerConfig>& servers) {
 							--i;
 							continue;
 						}
-						else if (res.closingConnection == true) {
+						
+						// Mettre à jour le timestamp d'activité
+						lastActivity[fds[i].fd] = time(NULL);
+						
+						if (res.closingConnection == true) {
 							close_client(fds[i].fd, fds, isServerFd, clientBuffers, lastActivity, clientFdToServerConfig);
 							--i;
 							continue;

@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "ResponseUtils.hpp"
+#include "../Cgi/CgiExecutor.hpp"
 
 /* std::string readLine(int fd) {
 	std::string line;

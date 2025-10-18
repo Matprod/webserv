@@ -11,6 +11,8 @@
 /* ************************************************************************** */
 
 #include "Response.hpp"
+#include "ResponseUtils.hpp"
+#include "../Cgi/CgiExecutor.hpp"
 
 Response buildResponse(const Request& request) {
 	std::cout << "\n\n\n--------------------------------------------\n" << std::endl;
@@ -22,7 +24,7 @@ Response buildResponse(const Request& request) {
 	LocationConfig* loc = getMatchingLocation(request, request.config, res, use_location);
 	
 	if (isCGIRequest(loc, request.uri))
-		return executeCGI(request, loc, request.config);	
+		return executeCGI(request, loc, request.config, -1);	
 	
 	EffectiveRoute eff;
 	eff.getMethod = request.method == "GET" ? true : false;

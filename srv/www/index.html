@@ -228,6 +228,70 @@
           </div>
         </section>
       </div>
+
+      <!-- CGI TESTING SECTION -->
+      <section class="card" style="margin-top: 16px">
+        <h2>4) CGI Testing</h2>
+        <div class="small" style="margin-bottom: 1rem">
+          Test different CGI scripts. CGI &lt; 5s return results, CGI &gt; 5s
+          return 504 Gateway Timeout.
+        </div>
+
+        <div style="margin-bottom: 1rem">
+          <button onclick="testCgi('/test_cgi.py', 'GET')">
+            Test Basic CGI (GET)
+          </button>
+          <button onclick="testCgi('/form_cgi.py', 'GET')">
+            Show CGI Form (GET)
+          </button>
+        </div>
+
+        <h3
+          style="
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+            color: var(--fg);
+          "
+        >
+          Test POST to Form CGI
+        </h3>
+        <form id="cgi-post-form" autocomplete="off">
+          <label for="cgi-name">Name</label>
+          <input id="cgi-name" type="text" placeholder="Your name" />
+
+          <label for="cgi-email">Email</label>
+          <input id="cgi-email" type="text" placeholder="your@email.com" />
+
+          <label for="cgi-message">Message</label>
+          <textarea
+            id="cgi-message"
+            placeholder="Your message..."
+            style="min-height: 80px"
+          ></textarea>
+
+          <button type="submit" style="margin-top: 0.5rem">
+            Submit POST to CGI
+          </button>
+        </form>
+
+        <div id="cgi-status" class="status"></div>
+        <div
+          id="cgi-result"
+          style="
+            margin-top: 12px;
+            padding: 12px;
+            background: #0b1220;
+            border: 1px solid #1f2937;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+            white-space: pre-wrap;
+          "
+        ></div>
+      </section>
     </div>
 
     <script>
@@ -345,6 +409,75 @@
       function truncate(s) {
         return s.length > 160 ? s.slice(0, 157) + "…" : s;
       }
+
+      // --- CGI Testing ---
+      async function testCgi(path, method = "GET", body = null) {
+        const cgiStatus = document.getElementById("cgi-status");
+        const cgiResult = document.getElementById("cgi-result");
+
+        cgiStatus.textContent = `Testing ${method} ${path}...`;
+        cgiStatus.className = "status";
+        cgiResult.style.display = "none";
+
+        const startTime = performance.now();
+
+        try {
+          const options = {
+            method: method,
+            cache: "no-store",
+          };
+
+          if (body) {
+            options.headers = {
+              "Content-Type": "application/x-www-form-urlencoded",
+            };
+            options.body = body;
+          }
+
+          const res = await fetch(path, options);
+          const endTime = performance.now();
+          const duration = ((endTime - startTime) / 1000).toFixed(2);
+          const text = await res.text();
+
+          if (res.status === 200) {
+            cgiStatus.textContent = `✅ ${method} ${path} → ${res.status} ${res.statusText} (${duration}s)`;
+            cgiStatus.classList.add("ok");
+            cgiResult.innerHTML = text;
+            cgiResult.style.display = "block";
+          } else if (res.status === 202) {
+            cgiStatus.textContent = `⏳ ${method} ${path} → ${res.status} ${res.statusText} - CGI is processing in background (${duration}s)`;
+            cgiStatus.classList.add("ok");
+            cgiResult.textContent = text;
+            cgiResult.style.display = "block";
+          } else {
+            cgiStatus.textContent = `❌ ${method} ${path} → ${res.status} ${res.statusText} (${duration}s)`;
+            cgiStatus.classList.add("err");
+            cgiResult.textContent = text;
+            cgiResult.style.display = "block";
+          }
+        } catch (err) {
+          const endTime = performance.now();
+          const duration = ((endTime - startTime) / 1000).toFixed(2);
+          cgiStatus.textContent = `❌ ${method} ${path} failed: ${err.message} (${duration}s)`;
+          cgiStatus.classList.add("err");
+        }
+      }
+
+      // --- CGI POST Form ---
+      const cgiPostForm = document.getElementById("cgi-post-form");
+      cgiPostForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const name = document.getElementById("cgi-name").value;
+        const email = document.getElementById("cgi-email").value;
+        const message = document.getElementById("cgi-message").value;
+
+        const body = `name=${encodeURIComponent(
+          name
+        )}&email=${encodeURIComponent(email)}&message=${encodeURIComponent(
+          message
+        )}`;
+        testCgi("/form_cgi.py", "POST", body);
+      });
     </script>
   </body>
 </html>

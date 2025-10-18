@@ -31,6 +31,11 @@ $(NAME): $(OBJS)
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
+# Dépendances automatiques (optionnel - décommentez si vous voulez recompiler quand les headers changent)
+# -include $(OBJS:.o=.d)
+# %.o: %.cpp
+# 	$(CXX) $(CXXFLAGS) $(INCLUDES) -MMD -MP -c $< -o $@
+
 clean:
 	rm -f $(OBJS)
 
@@ -44,3 +49,4 @@ parsing:
 	./check_parsing.sh
 
 .PHONY: all clean fclean re parsing
+.PRECIOUS: %.o

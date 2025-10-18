@@ -11,6 +11,10 @@
 /* ************************************************************************** */
 
 #include "CgiExecutor.hpp"
+#include "../Response/Response.hpp"
+
+// Définition de la map globale pour les processus CGI
+std::map<pid_t, CgiProcess> g_cgiProcesses;
 
 std::string getFileExtension(const std::string& uri) {
 	size_t dot_pos = uri.find_last_of('.');
@@ -179,7 +183,9 @@ void parseCgiResponse(const std::string& cgiOutput, Response& res) {
 	}
 }
 
-Response executeCGI(const Request& req, const LocationConfig* loc, const ServerConfig* server) {
+// Fonction pour exécuter CGI de manière synchrone avec timeout
+Response executeCGI(const Request& req, const LocationConfig* loc, const ServerConfig* server, int clientFd) {
+	(void)clientFd; // Paramètre pour compatibilité future avec gestion asynchrone
 	Response res;
 	res.version = "HTTP/1.1";
 
@@ -213,15 +219,6 @@ Response executeCGI(const Request& req, const LocationConfig* loc, const ServerC
 	std::string pathInfo = getPathInfo(req.uri, loc->path, scriptName);
 	std::string queryString = getQueryString(req.uri);
 	
-/* 	std::cout << "CGI DEBUG:" << std::endl;
-	std::cout << "  Extension: " << extension << std::endl;
-	std::cout << "  CGI Program: " << cgiProgram << std::endl;
-	std::cout << "  Script Name: " << scriptName << std::endl;
-	std::cout << "  Location Root: " << loc->root << std::endl;
-	std::cout << "  Server Root: " << server->root << std::endl;
-	std::cout << "  Used Root: " << rootPath << std::endl;
-	std::cout << "  Script Path: " << scriptPath << std::endl;
- */
 	// Vérifier que le script existe et est exécutable
 	if (access(scriptPath.c_str(), F_OK) != 0) {
 		res.statusCode = 404;
@@ -338,25 +335,68 @@ Response executeCGI(const Request& req, const LocationConfig* loc, const ServerC
 	}
 	close(pipe_in[1]);
 
-	// Lire la sortie du CGI
-	std::string cgiOutput = readCgiOutput(pipe_out[0]);
-	close(pipe_out[0]); //For read: we're closing fd here
-
-	// Attendre que le processus CGI se termine
-	int status;
-	waitpid(pid, &status, 0);
-
-	// Vérifier si le CGI s'est exécuté correctement
-	if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
-		// Parser la réponse CGI
-		parseCgiResponse(cgiOutput, res);
+	// Ne PAS attendre - le CGI va s'exécuter en arrière-plan
+	// On ferme juste notre copie du pipe de sortie que le CGI utilise
+	close(pipe_out[1]);
+	
+	// Timeout de 5 secondes pour les CGI
+	// ATTENTION: Le serveur bloquera jusqu'à 5 secondes pendant l'exécution du CGI
+	// Si le CGI ne finit pas en 5s, on retourne 504 Gateway Timeout
+	fd_set readfds;
+	struct timeval tv;
+	FD_ZERO(&readfds);
+	FD_SET(pipe_out[0], &readfds);
+	tv.tv_sec = 5;
+	tv.tv_usec = 0; // 5 secondes timeout
+	
+	int select_result = select(pipe_out[0] + 1, &readfds, NULL, NULL, &tv);
+	
+	if (select_result > 0) {
+		// Des données sont disponibles, lire
+		std::string cgiOutput = readCgiOutput(pipe_out[0]);
+		close(pipe_out[0]);
+		
+		// Attendre le processus (non-bloquant)
+		int status;
+		int wait_result = waitpid(pid, &status, WNOHANG);
+		
+		if (wait_result > 0 && WIFEXITED(status) && WEXITSTATUS(status) == 0) {
+			parseCgiResponse(cgiOutput, res);
+		} else {
+			res.statusCode = 500;
+			res.statusMessage = getStatusMessage(500);
+			res.body = "CGI Execution Failed";
+			res.headers["Content-Type"] = "text/html";
+			res.headers["Content-Length"] = toString<size_t>(res.body.size());
+		}
 	} else {
-		res.statusCode = 500;
-		res.statusMessage = getStatusMessage(500);
-		res.body = "CGI Execution Failed";
+		// Le CGI n'a pas fini dans le timeout de 5 secondes
+		// Tuer le processus CGI
+		kill(pid, SIGKILL);
+		waitpid(pid, NULL, 0); // Attendre que le processus soit tué
+		close(pipe_out[0]);
+		
+		// Retourner une erreur 504 Gateway Timeout
+		res.statusCode = 504;
+		res.statusMessage = "Gateway Timeout";
+		res.body = "<html><body><h1>504 Gateway Timeout</h1><p>The CGI script took too long to execute (>5 seconds).</p></body></html>";
 		res.headers["Content-Type"] = "text/html";
 		res.headers["Content-Length"] = toString<size_t>(res.body.size());
 	}
 
 	return res;
+}
+
+// Fonction pour vérifier l'état des processus CGI (pour nettoyage futur)
+void checkCgiProcesses() {
+	// Pour l'instant, juste nettoyer les processus zombies
+	int status;
+	while (waitpid(-1, &status, WNOHANG) > 0) {
+		// Processus nettoyé
+	}
+}
+
+// Fonction pour nettoyer un processus CGI
+void cleanupCgiProcess(pid_t pid) {
+	(void)pid; // Non utilisé pour l'instant
 }

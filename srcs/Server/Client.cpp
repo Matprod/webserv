@@ -11,6 +11,14 @@
 /* ************************************************************************** */
 
 #include "Client.hpp"
+#include "../Config/Config.hpp"
+#include "../Request/Request.hpp"
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <fcntl.h>
+#include <cerrno>
+#include <unistd.h>
+#include <iostream>
 
 void handle_new_connection(int serverFd, const ServerConfig* config, std::vector<pollfd>& fds, std::map<int, bool>& isServerFd, std::map<int, time_t>& lastActivity, std::map<int, const ServerConfig*>& clientFdToServerConfig) {
 	for (;;) {
