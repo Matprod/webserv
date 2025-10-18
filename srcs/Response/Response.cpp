@@ -11,20 +11,20 @@
 /* ************************************************************************** */
 
 #include "Response.hpp"
+#include "ResponseUtils.hpp"
+#include "../Cgi/CgiExecutor.hpp"
 
-Response buildResponse(const Request& request, const std::vector<ServerConfig>& servers) {
+Response buildResponse(const Request& request) {
 	std::cout << "\n\n\n--------------------------------------------\n" << std::endl;
-	std::cout << "NEW REQUEST:\n" << std::endl;
+	//std::cout << "NEW REQUEST:\n" << std::endl;
 	
 	Response res;
 	bool use_location = false;
 	
 	LocationConfig* loc = getMatchingLocation(request, request.config, res, use_location);
 	
-	if (isCGIRequest(loc, request.uri))
-	{
-		return executeCGI(request, loc, request.config);	
-	}
+	// NOTE: Les CGI sont maintenant gérés de manière asynchrone dans Server.cpp
+	// Cette fonction ne devrait jamais être appelée pour une requête CGI
 	
 	EffectiveRoute eff;
 	eff.getMethod = request.method == "GET" ? true : false;
@@ -472,6 +472,8 @@ int File::checkContentType(const std::string &contentType) const {
 		return SUCCESS;
 	else if (contentType.size() == 10 && contentType.compare(0, 12, "text/plain") == 0)
 		return SUCCESS;
+	else if (contentType.size() == 10 && contentType.compare(0, 12, "plain/text") == 0)
+		return SUCCESS;
 	return ERROR;
 }
 
@@ -707,7 +709,7 @@ void Response::setDefaultErrorPage() {
 }
 
 Response::Response()
-	: closingConnection(false), statusCode(0), statusMessage(""), version("HTTP/1.1"), body("")
+	: version("HTTP/1.1"), statusCode(0), statusMessage(""), body(""), closingConnection(false)
 {
 	headers.clear();
 }

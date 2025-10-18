@@ -18,7 +18,7 @@
 bool printConfig(const Config& config) {
     const std::vector<ServerConfig>& servers = config.getServers();
     if (servers.empty()) {
-        std::cout << "Aucun serveur configure." << std::endl;
+        std::cout << "No Server Config" << std::endl;
         return ERROR;
     }
 

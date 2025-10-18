@@ -11,6 +11,16 @@
 /* ************************************************************************** */
 
 #include "Client.hpp"
+#include "../Config/Config.hpp"
+#include "../Request/Request.hpp"
+#include "../Cgi/CgiExecutor.hpp"
+#include "../Response/Response.hpp"
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <fcntl.h>
+#include <cerrno>
+#include <unistd.h>
+#include <iostream>
 
 void handle_new_connection(int serverFd, const ServerConfig* config, std::vector<pollfd>& fds, std::map<int, bool>& isServerFd, std::map<int, time_t>& lastActivity, std::map<int, const ServerConfig*>& clientFdToServerConfig) {
 	for (;;) {
@@ -105,4 +115,64 @@ int handle_client_request(int fd, std::vector<pollfd>& fds, int& i,
 		//std::cout << "Incomplete request..\n";
 	}
 	return result;
+}
+
+// Vérifie si un fd est un pipe CGI
+bool isCGIPipeFd(int fd) {
+	return g_cgiProcesses.find(fd) != g_cgiProcesses.end();
+}
+
+// Gère un événement sur un pipe CGI
+void handleCGIPipeEvent(int pipe_fd, std::vector<pollfd>& fds, int& i,
+	std::map<int, bool>& isServerFd,
+	std::map<int, std::string>& clientBuffers,
+	std::map<int, time_t>& lastActivity,
+	std::map<int, const ServerConfig*>& clientFdToServerConfig)
+{
+	// Lire les données du CGI
+	handleCGIReadEvent(pipe_fd);
+	
+	// Vérifier si le CGI est terminé
+	std::map<int, CgiProcess>::iterator it = g_cgiProcesses.find(pipe_fd);
+	if (it == g_cgiProcesses.end()) {
+		std::cerr << "CGI process not found for pipe_fd=" << pipe_fd << std::endl;
+		return;
+	}
+	
+	CgiProcess& cgiProc = it->second;
+	
+	if (cgiProc.isComplete) {
+		// Le CGI est terminé, envoyer la réponse au client
+		Response res = finalizeCGIResponse(cgiProc);
+		std::string rawResponse = res.responseToString();
+		
+		std::cout << "Sending CGI response to client " << cgiProc.clientFd 
+		          << " (size=" << rawResponse.size() << " bytes)" << std::endl;
+		
+		int send_result = send(cgiProc.clientFd, rawResponse.c_str(), rawResponse.size(), 0);
+		if (send_result <= 0) {
+			std::cerr << "Error sending CGI response" << std::endl;
+			close_client(cgiProc.clientFd, fds, isServerFd, clientBuffers, lastActivity, clientFdToServerConfig);
+		} else {
+			// Mettre à jour le timestamp d'activité du client
+			lastActivity[cgiProc.clientFd] = time(NULL);
+			
+			// Fermer la connexion si nécessaire
+			if (res.closingConnection) {
+				close_client(cgiProc.clientFd, fds, isServerFd, clientBuffers, lastActivity, clientFdToServerConfig);
+			}
+		}
+		
+		// Nettoyer le processus CGI (ferme le pipe et retire de la map)
+		cleanupCGIProcess(pipe_fd);
+		
+		// Retirer le pipe_fd des fds surveillés par poll
+		for (size_t j = 0; j < fds.size(); ++j) {
+			if (fds[j].fd == pipe_fd) {
+				fds.erase(fds.begin() + j);
+				if ((int)j <= i) --i;
+				break;
+			}
+		}
+	}
 }

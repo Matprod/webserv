@@ -140,72 +140,6 @@
         padding: 0 0.35rem;
         border-radius: 6px;
       }
-
-      /* CGI Testing Styles */
-      .cgi-controls {
-        margin-bottom: 1rem;
-      }
-      .cgi-buttons {
-        display: flex;
-        gap: 0.5rem;
-        margin-top: 0.5rem;
-        flex-wrap: wrap;
-      }
-      .btn-primary {
-        background: var(--accent);
-        color: white;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight: 500;
-      }
-      .btn-primary:hover {
-        background: #3b82f6;
-      }
-      .btn-secondary {
-        background: #1f2937;
-        color: var(--fg);
-        border: 1px solid #374151;
-        padding: 0.4rem 0.8rem;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 0.9rem;
-      }
-      .btn-secondary:hover {
-        background: #374151;
-      }
-      .cgi-results {
-        margin-top: 1rem;
-      }
-      .cgi-result {
-        background: #0b1220;
-        border: 1px solid #1f2937;
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-      }
-      .cgi-result.success {
-        border-left: 4px solid var(--ok);
-      }
-      .cgi-result.error {
-        border-left: 4px solid var(--err);
-      }
-      .cgi-result h4 {
-        margin: 0 0 0.5rem 0;
-        color: var(--fg);
-        font-size: 1rem;
-      }
-      .cgi-result pre {
-        background: #000;
-        padding: 0.75rem;
-        border-radius: 4px;
-        overflow-x: auto;
-        font-size: 0.85rem;
-        margin: 0.5rem 0 0 0;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-      }
     </style>
   </head>
   <body>
@@ -293,33 +227,71 @@
             <span class="pill">DELETE</span>
           </div>
         </section>
-
-        <section class="card">
-          <h1>CGI Testing</h1>
-          <h2>Test your CGI scripts</h2>
-
-          <div class="cgi-controls">
-            <button id="test-all-cgi" class="btn-primary">
-              Test All CGI Scripts
-            </button>
-            <div class="cgi-buttons">
-              <button id="test-python" class="btn-secondary">Python</button>
-              <button id="test-php" class="btn-secondary">PHP</button>
-              <button id="test-shell" class="btn-secondary">Shell</button>
-              <button id="test-simple" class="btn-secondary">Simple</button>
-            </div>
-          </div>
-
-          <div id="cgi-status" class="status"></div>
-          <div id="cgi-results" class="cgi-results"></div>
-
-          <div class="footer">
-            Test your CGI scripts: Python, PHP, Shell, and Simple Python test.
-            <span class="pill">CGI</span> <span class="pill">Python</span>
-            <span class="pill">PHP</span> <span class="pill">Shell</span>
-          </div>
-        </section>
       </div>
+
+      <!-- CGI TESTING SECTION -->
+      <section class="card" style="margin-top: 16px">
+        <h2>4) CGI Testing</h2>
+        <div class="small" style="margin-bottom: 1rem">
+          Test different CGI scripts. CGI &lt; 5s return results, CGI &gt; 5s
+          return 504 Gateway Timeout.
+        </div>
+
+        <div style="margin-bottom: 1rem">
+          <button onclick="testCgi('/test_cgi.py', 'GET')">
+            Test Basic CGI (GET)
+          </button>
+          <button onclick="testCgi('/form_cgi.py', 'GET')">
+            Show CGI Form (GET)
+          </button>
+        </div>
+
+        <h3
+          style="
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+            color: var(--fg);
+          "
+        >
+          Test POST to Form CGI
+        </h3>
+        <form id="cgi-post-form" autocomplete="off">
+          <label for="cgi-name">Name</label>
+          <input id="cgi-name" type="text" placeholder="Your name" />
+
+          <label for="cgi-email">Email</label>
+          <input id="cgi-email" type="text" placeholder="your@email.com" />
+
+          <label for="cgi-message">Message</label>
+          <textarea
+            id="cgi-message"
+            placeholder="Your message..."
+            style="min-height: 80px"
+          ></textarea>
+
+          <button type="submit" style="margin-top: 0.5rem">
+            Submit POST to CGI
+          </button>
+        </form>
+
+        <div id="cgi-status" class="status"></div>
+        <div
+          id="cgi-result"
+          style="
+            margin-top: 12px;
+            padding: 12px;
+            background: #0b1220;
+            border: 1px solid #1f2937;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+            white-space: pre-wrap;
+          "
+        ></div>
+      </section>
     </div>
 
     <script>
@@ -334,7 +306,7 @@
       getForm.addEventListener("submit", (e) => {
         e.preventDefault();
         const path = normalizePath(getPath.value);
-        getFrame.src = path; // Let the browser render HTML listings naturally
+        getFrame.src = path;
         getStatus.className = "status";
         fetch(path, { method: "GET", cache: "no-store" })
           .then(async (res) => {
@@ -438,87 +410,74 @@
         return s.length > 160 ? s.slice(0, 157) + "…" : s;
       }
 
-      // --- CGI TESTING ---
-      const cgiStatus = $("#cgi-status");
-      const cgiResults = $("#cgi-results");
+      // --- CGI Testing ---
+      async function testCgi(path, method = "GET", body = null) {
+        const cgiStatus = document.getElementById("cgi-status");
+        const cgiResult = document.getElementById("cgi-result");
 
-      // Test CGI scripts
-      async function testCGI(scriptName, description) {
-        setStatus(cgiStatus, `Testing ${scriptName}...`);
+        cgiStatus.textContent = `Testing ${method} ${path}...`;
+        cgiStatus.className = "status";
+        cgiResult.style.display = "none";
+
+        const startTime = performance.now();
+
         try {
-          const response = await fetch(scriptName);
-          const text = await response.text();
-          const isSuccess = response.ok;
+          const options = {
+            method: method,
+            cache: "no-store",
+          };
 
-          const resultDiv = document.createElement("div");
-          resultDiv.className = `cgi-result ${isSuccess ? "success" : "error"}`;
-          resultDiv.innerHTML = `
-            <h4>${description} (${scriptName})</h4>
-            <div class="status ${isSuccess ? "ok" : "err"}">Status: ${
-            response.status
-          } ${response.statusText}</div>
-            <pre>${text}</pre>
-          `;
-          cgiResults.appendChild(resultDiv);
+          if (body) {
+            options.headers = {
+              "Content-Type": "application/x-www-form-urlencoded",
+            };
+            options.body = body;
+          }
 
-          setStatus(
-            cgiStatus,
-            `Tested ${scriptName} - ${isSuccess ? "Success" : "Failed"}`,
-            !isSuccess
-          );
-        } catch (error) {
-          const resultDiv = document.createElement("div");
-          resultDiv.className = "cgi-result error";
-          resultDiv.innerHTML = `
-            <h4>${description} (${scriptName})</h4>
-            <div class="status err">Error: ${error.message}</div>
-          `;
-          cgiResults.appendChild(resultDiv);
+          const res = await fetch(path, options);
+          const endTime = performance.now();
+          const duration = ((endTime - startTime) / 1000).toFixed(2);
+          const text = await res.text();
 
-          setStatus(
-            cgiStatus,
-            `Error testing ${scriptName}: ${error.message}`,
-            true
-          );
+          if (res.status === 200) {
+            cgiStatus.textContent = `✅ ${method} ${path} → ${res.status} ${res.statusText} (${duration}s)`;
+            cgiStatus.classList.add("ok");
+            cgiResult.innerHTML = text;
+            cgiResult.style.display = "block";
+          } else if (res.status === 202) {
+            cgiStatus.textContent = `⏳ ${method} ${path} → ${res.status} ${res.statusText} - CGI is processing in background (${duration}s)`;
+            cgiStatus.classList.add("ok");
+            cgiResult.textContent = text;
+            cgiResult.style.display = "block";
+          } else {
+            cgiStatus.textContent = `❌ ${method} ${path} → ${res.status} ${res.statusText} (${duration}s)`;
+            cgiStatus.classList.add("err");
+            cgiResult.textContent = text;
+            cgiResult.style.display = "block";
+          }
+        } catch (err) {
+          const endTime = performance.now();
+          const duration = ((endTime - startTime) / 1000).toFixed(2);
+          cgiStatus.textContent = `❌ ${method} ${path} failed: ${err.message} (${duration}s)`;
+          cgiStatus.classList.add("err");
         }
       }
 
-      // Test all CGI scripts
-      document
-        .getElementById("test-all-cgi")
-        .addEventListener("click", async () => {
-          cgiResults.innerHTML = "";
-          setStatus(cgiStatus, "Starting CGI tests...");
+      // --- CGI POST Form ---
+      const cgiPostForm = document.getElementById("cgi-post-form");
+      cgiPostForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const name = document.getElementById("cgi-name").value;
+        const email = document.getElementById("cgi-email").value;
+        const message = document.getElementById("cgi-message").value;
 
-          await testCGI("test_cgi.py", "Python CGI Script");
-          await testCGI("test_cgi.php", "PHP CGI Script");
-          await testCGI("test_cgi.sh", "Shell CGI Script");
-          await testCGI("simple_test.py", "Simple Python Test");
-
-          setStatus(cgiStatus, "All CGI tests completed!");
-        });
-
-      // Test individual scripts
-      document
-        .getElementById("test-python")
-        .addEventListener("click", () =>
-          testCGI("test_cgi.py", "Python CGI Script")
-        );
-      document
-        .getElementById("test-php")
-        .addEventListener("click", () =>
-          testCGI("test_cgi.php", "PHP CGI Script")
-        );
-      document
-        .getElementById("test-shell")
-        .addEventListener("click", () =>
-          testCGI("test_cgi.sh", "Shell CGI Script")
-        );
-      document
-        .getElementById("test-simple")
-        .addEventListener("click", () =>
-          testCGI("simple_test.py", "Simple Python Test")
-        );
+        const body = `name=${encodeURIComponent(
+          name
+        )}&email=${encodeURIComponent(email)}&message=${encodeURIComponent(
+          message
+        )}`;
+        testCgi("/form_cgi.py", "POST", body);
+      });
     </script>
   </body>
 </html>

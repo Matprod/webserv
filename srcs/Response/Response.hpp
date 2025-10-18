@@ -6,7 +6,7 @@
 /*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 13:58:27 by allan             #+#    #+#             */
-/*   Updated: 2025/09/21 16:56:15 by adebert          ###   ########.fr       */
+/*   Updated: 2025/10/07 16:03:42 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,7 +75,7 @@ struct File {
 };
 
 bool isMethodAllowed(int method, std::set<std::string> allow_methods);
-Response buildResponse(const Request& request, const std::vector<ServerConfig>& servers);
+Response buildResponse(const Request& request);
 Response handleGet(const Request& request, EffectiveRoute& eff);
 Response handleIndex(const EffectiveRoute& eff);
 Response createIndexResponse(int fd, bool closeConnection, std::map<int, std::string> error_pages);

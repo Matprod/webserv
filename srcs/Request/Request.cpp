@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mvoisin <mvoisin@student.42.fr>            +#+  +:+       +#+        */
+/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:44:20 by allan             #+#    #+#             */
-/*   Updated: 2025/09/28 16:35:26 by mvoisin          ###   ########.fr       */
+/*   Updated: 2025/10/07 17:31:53 by adebert          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,7 @@ int parse_request_line(const std::string& request_line, Request& req) {
 		return REQUEST_ERROR;
 	}
 	req.method = request_line.substr(0, method_end);
-	std::cout << "REQUEST LINE DEBUG: [" << request_line << "]" << std::endl;
+	//std::cout << "REQUEST LINE DEBUG: [" << request_line << "]" << std::endl;
 
 	size_t uri_end = request_line.find(' ', method_end + 1);
 	if (uri_end == std::string::npos)
@@ -113,7 +113,7 @@ int parse_request(int socket, Request& req, std::map<int, std::string>& buffers,
 		char* endptr;
 		long len = strtol(req.headers["content-length"].c_str(), &endptr, 10);
 		if (*endptr != '\0' || len < 0 || (unsigned)len > req.config->max_body_size) {
-			std::cerr << "Content-Length invalide or too big\n";
+			std::cerr << "Content-Length invalid or too big\n";
 			return ERROR_MAX_BODY_LENGTH;
 		}
 		content_length = static_cast<size_t>(len);

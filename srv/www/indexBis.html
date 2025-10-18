@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Webserv Control Panel</title>
+    <style>
+      :root {
+        --bg: #95a6cf;
+        --card: #7ea6fd;
+        --muted: #94a3b8;
+        --fg: #e5e7eb;
+        --accent: #60a5fa;
+        --ok: #e5e91e;
+        --err: #ff00b3;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu,
+          Cantarell, Noto Sans, sans-serif;
+      }
+      h1,
+      h2 {
+        margin: 0 0 0.5rem;
+      }
+      h1 {
+        font-size: 1.5rem;
+      }
+      h2 {
+        font-size: 1.1rem;
+        color: var(--muted);
+      }
+      .container {
+        max-width: 1100px;
+        margin: 24px auto;
+        padding: 0 16px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 16px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid #1f2937;
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      }
+      label {
+        display: block;
+        margin: 0.5rem 0 0.25rem;
+        color: var(--muted);
+      }
+      input[type="text"],
+      textarea,
+      select {
+        width: 100%;
+        background: #0b1220;
+        border: 1px solid #1f2937;
+        color: var(--fg);
+        padding: 0.6rem 0.7rem;
+        border-radius: 10px;
+        outline: none;
+      }
+      textarea {
+        min-height: 120px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+      }
+      button {
+        background: var(--accent);
+        border: none;
+        color: #021024;
+        padding: 0.6rem 0.9rem;
+        border-radius: 10px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .row > * {
+        flex: 1;
+      }
+      .status {
+        margin-top: 10px;
+        font-size: 0.95rem;
+      }
+      .status.ok {
+        color: var(--ok);
+      }
+      .status.err {
+        color: var(--err);
+      }
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+      }
+      iframe {
+        width: 100%;
+        height: 420px;
+        background: #0b1220;
+        border: 1px solid #1f2937;
+        border-radius: 12px;
+      }
+      .small {
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+      .pill {
+        display: inline-block;
+        border: 1px solid #1f2937;
+        background: #0b1220;
+        color: var(--muted);
+        padding: 0.1rem 0.5rem;
+        border-radius: 999px;
+        margin-left: 0.5rem;
+      }
+      .footer {
+        margin-top: 14px;
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+      .kbd {
+        background: #0b1220;
+        border: 1px solid #1f2937;
+        border-bottom-width: 2px;
+        padding: 0 0.35rem;
+        border-radius: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header style="margin-bottom: 14px">
+        <h1>🧪 Webserv Control Panel</h1>
+        <div class="small">
+          Works against the <span class="mono">same origin</span> that serves
+          this file (your Webserv). Adjust endpoints below if needed. This page
+          only uses GET, POST, and DELETE (no HEAD).
+        </div>
+      </header>
+
+      <div class="grid">
+        <!-- LEFT COLUMN: GET EXPLORER -->
+        <section class="card">
+          <h2>1) GET explorer (file or autoindex)</h2>
+          <form id="get-form" class="row" autocomplete="off">
+            <input
+              id="get-path"
+              type="text"
+              value="/"
+              placeholder="/ or /subdir/ or /file.txt"
+            />
+            <button id="btn-get" type="submit">GET</button>
+          </form>
+          <div class="small" style="margin: 0.5rem 0 1rem">
+            If the target is a directory and autoindex is enabled, the listing
+            will render below. Clicking links stays inside the frame.
+          </div>
+          <iframe id="get-frame" title="GET preview"></iframe>
+          <div id="get-status" class="status"></div>
+        </section>
+
+        <!-- RIGHT COLUMN: POST & DELETE -->
+        <section class="card">
+          <h2>2) POST a text file</h2>
+          <form id="post-form" autocomplete="off">
+            <label for="post-fn"
+              >Target filename (relative to upload route)</label
+            >
+            <input id="post-fn" type="text" placeholder="example.txt" />
+            <div class="row" style="margin-top: 0.5rem">
+              <select id="post-ctype" title="Content-Type">
+                <option value="text/plain">text/plain</option>
+                <option value="application/json">application/json</option>
+                <option value="application/octet-stream">
+                  application/octet-stream
+                </option>
+              </select>
+              <input id="post-prefix" type="text" value="/upload/" />
+            </div>
+            <label for="post-body" style="margin-top: 0.6rem">Body</label>
+            <textarea
+              id="post-body"
+              placeholder="Write your content…"
+            ></textarea>
+            <div class="row" style="margin-top: 0.6rem">
+              <button id="btn-post" type="submit">POST</button>
+              <div class="small">
+                POST →
+                <span class="mono" id="post-url-preview"
+                  >/upload/&lt;filename&gt;</span
+                >
+              </div>
+            </div>
+          </form>
+          <div id="post-status" class="status"></div>
+
+          <hr
+            style="border: none; border-top: 1px solid #1f2937; margin: 16px 0"
+          />
+
+          <h2>3) DELETE a file</h2>
+          <form id="del-form" class="row" autocomplete="off">
+            <input id="del-fn" type="text" placeholder="example.txt" />
+            <input id="del-prefix" type="text" value="/upload/" />
+            <button id="btn-del" type="submit">DELETE</button>
+          </form>
+          <div id="del-status" class="status"></div>
+
+          <div class="footer">
+            Tip: After POST or DELETE, use the GET explorer to verify results.
+            <span class="pill">GET</span> <span class="pill">POST</span>
+            <span class="pill">DELETE</span>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      const $ = (sel) => document.querySelector(sel);
+
+      // --- GET ---
+      const getForm = $("#get-form");
+      const getPath = $("#get-path");
+      const getFrame = $("#get-frame");
+      const getStatus = $("#get-status");
+
+      getForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const path = normalizePath(getPath.value);
+        getFrame.src = path;
+        getStatus.className = "status";
+        fetch(path, { method: "GET", cache: "no-store" })
+          .then(async (res) => {
+            getStatus.textContent = `GET ${path} → ${res.status} ${res.statusText}`;
+            if (res.ok) getStatus.classList.add("ok");
+            else getStatus.classList.add("err");
+          })
+          .catch((err) => {
+            getStatus.textContent = `GET ${path} failed: ${err.message}`;
+            getStatus.classList.add("err");
+          });
+      });
+
+      // --- POST ---
+      const postForm = $("#post-form");
+      const postFn = $("#post-fn");
+      const postPrefix = $("#post-prefix");
+      const postBody = $("#post-body");
+      const postCtype = $("#post-ctype");
+      const postStatus = $("#post-status");
+      const postUrlPreview = $("#post-url-preview");
+
+      function updatePostPreview() {
+        postUrlPreview.textContent =
+          normalizePath(postPrefix.value) + (postFn.value || "<filename>");
+      }
+      postFn.addEventListener("input", updatePostPreview);
+      postPrefix.addEventListener("input", updatePostPreview);
+      updatePostPreview();
+
+      postForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const fn = (postFn.value || "").trim();
+        const base = normalizePath(postPrefix.value);
+        if (!fn) return setStatus(postStatus, "Please enter a filename.", true);
+        const url = base + fn;
+        setStatus(postStatus, "Posting…");
+        try {
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": postCtype.value },
+            body: postBody.value,
+          });
+          const txt = await res.text().catch(() => "");
+          setStatus(
+            postStatus,
+            `POST ${url} → ${res.status} ${res.statusText}${
+              txt ? " — " + truncate(txt) : ""
+            }`,
+            !res.ok
+          );
+        } catch (err) {
+          setStatus(postStatus, `POST ${url} failed: ${err.message}`, true);
+        }
+      });
+
+      // --- DELETE ---
+      const delForm = $("#del-form");
+      const delFn = $("#del-fn");
+      const delPrefix = $("#del-prefix");
+      const delStatus = $("#del-status");
+
+      delForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const fn = (delFn.value || "").trim();
+        const base = normalizePath(delPrefix.value);
+        if (!fn)
+          return setStatus(
+            delStatus,
+            "Please enter a filename to delete.",
+            true
+          );
+        const url = base + fn;
+        setStatus(delStatus, "Deleting…");
+        try {
+          const res = await fetch(url, { method: "DELETE" });
+          const txt = await res.text().catch(() => "");
+          setStatus(
+            delStatus,
+            `DELETE ${url} → ${res.status} ${res.statusText}${
+              txt ? " — " + truncate(txt) : ""
+            }`,
+            !res.ok
+          );
+        } catch (err) {
+          setStatus(delStatus, `DELETE ${url} failed: ${err.message}`, true);
+        }
+      });
+
+      // --- helpers ---
+      function normalizePath(p) {
+        if (!p) return "/";
+        if (!p.startsWith("/")) p = "/" + p;
+        return p;
+      }
+      function setStatus(node, msg, isErr) {
+        node.className = "status " + (isErr ? "err" : "ok");
+        node.textContent = msg;
+      }
+      function truncate(s) {
+        return s.length > 160 ? s.slice(0, 157) + "…" : s;
+      }
+    </script>
+  </body>
+</html>

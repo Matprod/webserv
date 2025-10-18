@@ -1,7 +1,7 @@
 NAME = webserv
 
 CXX = g++
-CXXFLAGS = -Wall -Wextra -std=c++98
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
 SRCS = 	srcs/main.cpp \
 		srcs/Config/Config.cpp \
