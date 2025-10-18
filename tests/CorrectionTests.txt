@@ -1,0 +1,37 @@
+
+GET
+curl http://localhost:3434/
+
+POST
+curl -sS -X POST http://localhost:3434/upload/a.txt -H "Content-Type: application/octet-stream" --data-binary "AAAA"
+curl -sS -X POST http://localhost:3434/upload/b.txt -H "Content-Type: application/json"            -d '{"x":1}'
+curl -sS -X POST http://localhost:3434/upload/c.txt -H "Content-Type: text/plain"                   -d "hello"
+
+POST MAX BODY (Modif max body in the config file)
+curl -sS -X POST http://localhost:3434/upload/c.txt -H "Content-Type: text/plain" -d "hello"
+curl -X POST http://localhost:3434/upload/a.txt -H "Content-Type: plain/text" --data "BODY IS HERE" (SUBJECT COMMAND)
+
+
+VERIF POST
+diff -u <(curl -sS http://localhost:3434/upload/a.txt) <(printf "AAAA")
+diff -u <(curl -sS http://localhost:3434/upload/b.txt) <(printf '{"x":1}')
+diff -u <(curl -sS http://localhost:3434/upload/c.txt) <(printf "hello")
+
+DELETE
+curl -sS -o /dev/null -w "%{http_code}\n" -X DELETE http://localhost:3434/upload/a.txt    # expect 204
+curl -sS -o /dev/null -w "%{http_code}\n"              http://localhost:3434/upload/a.txt  # expect 404 
+
+
+SIEGE
+siege -b -c 30 -t 2m http://localhost:3434/ping.html
+siege -b -c 30 -t 20s http://127.0.0.1:3434/100kb.bin
+siege -b -c 30 -t 20s http://127.0.0.1:3434/1mb.bin	
+siege -b -c 200 -t 30s http://127.0.0.1:3434/1mb.bin
+
+MEMORY
+pgrep webserv
+top -p <PID>
+
+CGI
+http://localhost:3434/test_cgi.py
+http://localhost:3434/test_cgi.php

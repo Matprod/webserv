@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   EffectiveRoute.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
+/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/10 14:20:55 by adebert           #+#    #+#             */
-/*   Updated: 2025/10/07 17:30:49 by adebert          ###   ########.fr       */
+/*   Updated: 2025/10/18 16:34:55 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,8 +58,10 @@ bool EffectiveRoute::createEffectiveRoute(const ServerConfig* srv, const Locatio
 	
 	if (!loc->upload_path.empty())
 		upload_path = loc->upload_path;
+	else if (!srv->upload_path.empty())
+		upload_path = srv->upload_path;
 	else
-		upload_path = "/upload";
+		upload_path = "/upload/";
 		
 	location_prefix = loc->path;
 	redirect_status = loc->redirect_status;
@@ -93,7 +95,10 @@ bool EffectiveRoute::createEffectiveRoute(const ServerConfig* srv) {
 	else
 		index = "index.html";
 	
-	upload_path = "/upload";
+	if (!srv->upload_path.empty())
+		upload_path = srv->upload_path;
+	else
+		upload_path = "/upload/";
 		
 	autoindex = srv->autoindex;
 	

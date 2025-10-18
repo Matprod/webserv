@@ -36,7 +36,7 @@ II - Test Method Response:
 
 III - Code Security and Cleaness:
 
-	A - Leak
+	A - Leak OK
 
 	B - Fd / Socket not Closed
 

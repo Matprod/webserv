@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adebert <adebert@student.42.fr>            +#+  +:+       +#+        */
+/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:29:23 by allan             #+#    #+#             */
-/*   Updated: 2025/10/07 17:23:48 by adebert          ###   ########.fr       */
+/*   Updated: 2025/10/18 16:36:47 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -184,6 +184,18 @@ void serverLoop(const std::vector<ServerConfig>& servers) {
 								continue;
 							}
 						}
+					} else if (parse_status == ERROR_MAX_BODY_LENGTH) {
+						Response res;
+						res.createResponse(413, "", req.config->error_pages);
+						std::string rawResponse = res.responseToString();
+						std::cout << "RESPONSE:\n" << rawResponse << std::endl;
+						int result;
+						result = send(fds[i].fd, rawResponse.c_str(), rawResponse.size(), 0); //THE ONLY SEND FOR EACH CLIENT
+						if (result <= 0)
+							std::cout << "Error Sending response" << std::endl;
+						close_client(fds[i].fd, fds, isServerFd, clientBuffers, lastActivity, clientFdToServerConfig);
+						--i;
+						continue;
 					}
 					else if (parse_status == REQUEST_INCOMPLETE) {
 						// WAITING

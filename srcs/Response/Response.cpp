@@ -265,6 +265,23 @@ Response handlePost(const Request& request, const EffectiveRoute& eff) {
 	if (checkRequestVersion(request.version, file.response, eff.server->error_pages) == ERROR)
 		return file.response;
 	
+    std::string baseDir;
+	if (eff.use_alias)
+		baseDir = eff.alias + eff.upload_path;
+	else
+		baseDir = eff.root + eff.upload_path;
+	std::cout << "Upload_Path =\t" << baseDir << "\n" << std::endl;
+	if (access(baseDir.c_str(), F_OK) != 0) {
+    	// Directory does not exist
+    	file.response.createResponse(409, "Upload Directory: " + baseDir + " Does not Exists", eff.server->error_pages); // or 500
+		return file.response;
+	}
+	if (access(baseDir.c_str(), W_OK) != 0) {
+	    // Directory exists but not writable
+	    file.response.createResponse(403, "Upload Directory: " + baseDir + " is not Writable", eff.server->error_pages);
+		return file.response;
+	}
+
 	if (file.getFileName(eff) == ERROR)
 		return file.response;
 	std::cout << "FileName:\t" << file.fileName << std::endl;
@@ -297,10 +314,12 @@ Response handleDelete(const Request& request, const EffectiveRoute& eff) {
 		return file.response;
 	
 	if (eff.use_alias)
-		file.filePath = eff.alias + "/upload/" + file.fileName;
+		file.filePath = eff.alias + request.uri;
 	else
-		file.filePath = eff.root + "/upload/" + file.fileName;
+		file.filePath = eff.root + request.uri;
 	
+	std::cout << "File Path: " << file.filePath << std::endl;
+
 	if (unlink(file.filePath.c_str()) != 0) { //Unlink is not read or write, errno is allowed
 		file.createDeleteResponse(errno, eff.server->error_pages);
 		return file.response;
@@ -410,9 +429,9 @@ bool File::fileExists(const std::string fullPath) const {
 std::string File::generateUniqueFilename(const EffectiveRoute& eff) {
     std::string baseDir;
 	if (eff.use_alias)
-		baseDir = eff.alias + eff.upload_path + "/";
+		baseDir = eff.alias + eff.upload_path;
 	else
-		baseDir = eff.root + eff.upload_path + "/";
+		baseDir = eff.root + eff.upload_path;
 		
     std::string name = fileName;
     std::string extension = "";
@@ -570,6 +589,7 @@ void Response::setClosingConnection(void) {
         switch (statusCode) {
             case 400: // Bad Request (parsing issues)
             case 408: // Request Timeout (if you use it)
+			case 409:
             case 411: // Length Required
             case 413: // Payload Too Large
             case 414: // URI Too Long
@@ -596,6 +616,7 @@ std::string getStatusMessage(int statusCode) {
 		case 403: return "Forbidden";
 		case 404: return "Not Found";
 		case 405: return "Method not Allowed";
+		case 409: return "Directory does not Exists";
 		case 411: return "Length Required";
 		case 413: return "Payload Too Large";
 		case 414: return "URI Too Long";
@@ -624,6 +645,7 @@ bool isErrorStatusCode(int statusCode) {
 		case 403:
 		case 404:
 		case 405:
+		case 409:
 		case 411:
 		case 413:
 		case 414:
