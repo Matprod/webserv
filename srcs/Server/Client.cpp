@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mvoisin <mvoisin@student.42.fr>            +#+  +:+       +#+        */
+/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 14:42:06 by allan             #+#    #+#             */
-/*   Updated: 2025/09/28 16:34:51 by mvoisin          ###   ########.fr       */
+/*   Updated: 2025/10/18 14:59:25 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,12 +77,7 @@ int handle_client_request(int fd, std::vector<pollfd>& fds, int& i,
 	//std::cout << "Parsing request" << std::endl;
 	int result = parse_request(fd, req, clientBuffers, lastActivity);
 	if (result == ERROR_MAX_BODY_LENGTH)
-	{
-		std::cerr << "Error with max_body\n";
-		close_client(fd, fds, isServerFd, clientBuffers, lastActivity, clientFdToServerConfig); //Here for 
-		--i;
-		return REQUEST_ERROR;
-	}
+		return result;
 	if (result == REQUEST_ERROR) {
 		std::cerr << "Error of parsing for the request\n";
 		close_client(fd, fds, isServerFd, clientBuffers, lastActivity, clientFdToServerConfig); //Here for 

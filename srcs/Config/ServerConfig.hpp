@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerConfig.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mvoisin <mvoisin@student.42.fr>            +#+  +:+       +#+        */
+/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 20:09:14 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/28 16:44:02 by mvoisin          ###   ########.fr       */
+/*   Updated: 2025/10/18 12:52:57 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,7 @@ public:
 	unsigned long max_body_size;
 	std::vector<LocationConfig> locations;
 	std::string index;
+	std::string upload_path;
 	
 	std::set<std::string> allow_methods;
 	int socketFd;

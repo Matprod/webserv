@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerConfig.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mvoisin <mvoisin@student.42.fr>            +#+  +:+       +#+        */
+/*   By: allan <allan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 20:07:43 by Matprod           #+#    #+#             */
-/*   Updated: 2025/09/28 17:02:40 by mvoisin          ###   ########.fr       */
+/*   Updated: 2025/10/18 13:07:38 by allan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,12 @@ bool Config::parseServerDirective(const std::string& directive, const std::vecto
 				srv->allow_methods.insert(values[i]);
 		} else
 		srv->allow_methods.insert("NONE");
+	} else if (directive == "upload_path") {
+		if (values.size() != 1) {
+			std::cerr << "Error: Invalid upload_path directive - only one value allowed" << std::endl;
+			return ERROR;
+		}
+		srv->upload_path = values[0];
 	} else if (directive == "autoindex" || directive == "directory_listing") {
 		if (values.size() != 1) {
 			std::cerr << "Invalid " << directive << " directive" << std::endl;
@@ -53,7 +59,6 @@ bool Config::parseServerDirective(const std::string& directive, const std::vecto
 			std::cerr << "Invalid listen directive" << std::endl;
 			return ERROR;
 		}
-		
 		
 		std::string value = values[0];
 		std::string ip;
